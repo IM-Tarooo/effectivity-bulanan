@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#04060e" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Efektivitas Bulanan — pengatur keuangan bulanan neon untuk dua orang. Budget, pengeluaran, grafik, dan sisa otomatis."
+    />
+    <title>Efektivitas Bulanan</title>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2304060e'/%3E%3Cpath d='M16 42h10V26H16zm22 0h10V18H38z' fill='%2300f0ff'/%3E%3Ccircle cx='21' cy='21' r='3' fill='%23ff2bd6'/%3E%3C/svg%3E" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="circuit-bg" aria-hidden="true">
+      <svg class="circuit-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+        <g class="traces">
+          <path class="trace cyan" d="M-20 150 H210 V80 H460 V230 H700 V120 H980 V200 H1180" />
+          <path class="trace magenta" d="M-20 320 H160 V420 H360 V300 H620 V460 H900 V380 H1120 V500 H1460" />
+          <path class="trace violet" d="M-20 640 H240 V560 H520 V700 H760 V600 H1040 V760 H1460" />
+          <path class="trace cyan" d="M120 920 V800 H300 V700 H520 V820 H760 V740 H1000 V860 H1240 V780 H1460" />
+          <path class="trace magenta" d="M80 40 V240 H260 V360 H440 V220 H620" />
+          <path class="trace cyan" d="M1060 920 V820 H1220 V680 H1360 V560 H1460" />
+          <path class="trace violet" d="M1240 40 V160 H1100 V260 H960" />
+        </g>
+        <g class="nodes">
+          <circle class="node cyan" cx="210" cy="150" r="3" style="animation-delay: 0s" />
+          <circle class="node magenta" cx="460" cy="230" r="3" style="animation-delay: 0.4s" />
+          <circle class="node lime" cx="700" cy="120" r="3" style="animation-delay: 0.8s" />
+          <circle class="node cyan" cx="980" cy="200" r="3" style="animation-delay: 1.2s" />
+          <circle class="node magenta" cx="160" cy="420" r="3" style="animation-delay: 0.6s" />
+          <circle class="node cyan" cx="620" cy="460" r="3" style="animation-delay: 1s" />
+          <circle class="node lime" cx="900" cy="380" r="3" style="animation-delay: 1.4s" />
+          <circle class="node violet" cx="1120" cy="500" r="3" style="animation-delay: 1.8s" />
+          <circle class="node cyan" cx="520" cy="700" r="3" style="animation-delay: 0.2s" />
+          <circle class="node magenta" cx="760" cy="600" r="3" style="animation-delay: 0.9s" />
+          <circle class="node lime" cx="1040" cy="760" r="3" style="animation-delay: 1.5s" />
+          <circle class="node cyan" cx="300" cy="700" r="3" style="animation-delay: 1.1s" />
+          <circle class="node magenta" cx="1000" cy="740" r="3" style="animation-delay: 0.3s" />
+          <circle class="node cyan" cx="260" cy="360" r="3" style="animation-delay: 1.7s" />
+          <circle class="node lime" cx="1220" cy="680" r="3" style="animation-delay: 0.5s" />
+          <circle class="node magenta" cx="1100" cy="160" r="3" style="animation-delay: 1.3s" />
+        </g>
+      </svg>
+    </div>
+
+    <noscript>
+      <div style="max-width: 640px; margin: 40px auto; padding: 24px; border: 1px solid #00f0ff; border-radius: 12px; font-family: sans-serif; color: #e6faff; background: #07101f">
+        JavaScript wajib aktif untuk menjalankan Efektivitas Bulanan.
+      </div>
+    </noscript>
+
+    <!-- ============================================================
+         WELCOME / SETUP
+         ============================================================ -->
+    <section id="screen-welcome" class="screen welcome-screen" hidden>
+      <div class="welcome-grid">
+        <div class="panel welcome-hero">
+          <div class="bulb-row big"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="eyebrow">Neon Finance OS // 2 User Mode</p>
+          <h1 class="hero-title">Efektivitas <span>Bulanan</span></h1>
+          <p class="hero-copy">
+            Atur budget awal bulan, catat semua pengeluaran, dan lihat sisa uang secara otomatis.
+            Data tersimpan online dan bisa dipakai berdua lewat kode undangan.
+          </p>
+          <div class="hero-actions">
+            <button id="welcome-demo-btn" class="btn primary" type="button">Coba Mode Demo</button>
+            <button id="welcome-setup-toggle" class="btn ghost" type="button">Panduan Setup</button>
+          </div>
+          <ul class="feature-list">
+            <li>Dashboard grafik budget dan pengeluaran</li>
+            <li>Sisa budget otomatis plus / minus</li>
+            <li>Shared rumah tangga untuk 2 akun</li>
+            <li>Preset menu masak &amp; jajan sekali klik</li>
+            <li>Tema neon circuit dengan lampu bergantian</li>
+          </ul>
+        </div>
+
+        <div id="welcome-setup-panel" class="panel setup-panel" hidden>
+          <h2>Hubungkan Supabase</h2>
+          <p>
+            Buat project gratis di supabase.com, jalankan file <code>supabase/schema.sql</code> di
+            SQL Editor, lalu tempel URL dan anon key di bawah.
+          </p>
+          <form id="setup-form" class="form-grid">
+            <label>
+              Project URL
+              <input id="setup-url" type="url" placeholder="https://xxxx.supabase.co" required />
+            </label>
+            <label>
+              Anon public key
+              <input id="setup-key" type="text" placeholder="eyJhbGciOi..." required />
+            </label>
+            <p id="setup-error" class="form-error" hidden></p>
+            <button class="btn primary" type="submit">Simpan &amp; Muat Ulang</button>
+          </form>
+          <p class="hint" style="margin-top: 12px">
+            Anon key aman dipakai di frontend selama RLS aktif. Jangan pernah memakai service_role key.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         AUTH
+         ============================================================ -->
+    <section id="screen-auth" class="screen auth-screen" hidden>
+      <div class="auth-grid">
+        <div class="auth-brand">
+          <div class="bulb-row big"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <p class="eyebrow">Neon Finance OS</p>
+          <h1 class="hero-title">Efektivitas <span>Bulanan</span></h1>
+          <p class="hero-copy">
+            Masuk untuk mengakses budget rumah tangga kalian. Dua akun, satu rumah tangga, data
+            yang sama.
+          </p>
+          <ul class="feature-list">
+            <li>Budget otomatis berkurang saat pengeluaran dicatat</li>
+            <li>Budget bertambah saat kamu menambah pemasukan budget</li>
+            <li>Grafik kategori, harian, dan kumulatif</li>
+          </ul>
+        </div>
+
+        <div class="panel auth-card">
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-auth-tab="login" type="button">Masuk</button>
+            <button class="auth-tab" data-auth-tab="register" type="button">Daftar</button>
+          </div>
+          <h2 id="auth-title">Selamat datang kembali</h2>
+          <p id="auth-subtitle" class="muted">Masuk dengan email dan password.</p>
+
+          <form id="auth-form" class="form-grid">
+            <label id="auth-name-wrap" hidden>
+              Nama tampilan
+              <input id="auth-name" type="text" maxlength="40" placeholder="Nama kamu" />
+            </label>
+            <label>
+              Email
+              <input id="auth-email" type="email" autocomplete="email" required placeholder="nama@email.com" />
+            </label>
+            <label>
+              Password
+              <input
+                id="auth-password"
+                type="password"
+                autocomplete="current-password"
+                minlength="6"
+                required
+                placeholder="Minimal 6 karakter"
+              />
+            </label>
+            <p id="auth-error" class="form-error" hidden></p>
+            <button id="auth-submit" class="btn primary" type="submit">Masuk</button>
+          </form>
+
+          <p class="hint" style="margin-top: 14px">
+            Setelah 2 akun dibuat, matikan signup publik di Supabase (Authentication &gt; Providers
+            &gt; Email) supaya tidak ada akun random.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         ONBOARDING
+         ============================================================ -->
+    <section id="screen-onboarding" class="screen onboarding-screen" hidden>
+      <div class="onboarding-head">
+        <p class="eyebrow">Langkah Terakhir</p>
+        <h1>Hubungkan Rumah Tangga</h1>
+        <p class="muted">
+          Login sebagai <span id="onboarding-email">—</span>. Buat rumah tangga baru, atau gabung
+          pakai kode undangan pasangan.
+        </p>
+      </div>
+
+      <div class="onboarding-grid">
+        <form id="create-household-form" class="panel form-grid">
+          <h2>Buat Baru</h2>
+          <label>
+            Nama rumah tangga
+            <input id="create-household-name" maxlength="60" placeholder="Contoh: Kos Tarooo" required />
+          </label>
+          <label>
+            Nama tampilan kamu
+            <input id="create-display-name" maxlength="40" placeholder="Contoh: Taro" />
+          </label>
+          <button class="btn primary" type="submit">Buat Rumah Tangga</button>
+        </form>
+
+        <form id="join-household-form" class="panel form-grid">
+          <h2>Gabung</h2>
+          <label>
+            Kode undangan
+            <input
+              id="join-code"
+              maxlength="6"
+              placeholder="ABC123"
+              style="text-transform: uppercase; letter-spacing: 0.2em"
+              required
+            />
+          </label>
+          <label>
+            Nama tampilan kamu
+            <input id="join-display-name" maxlength="40" placeholder="Contoh: Pasangan" />
+          </label>
+          <button class="btn ghost" type="submit">Gabung</button>
+        </form>
+      </div>
+
+      <p id="onboarding-error" class="form-error" hidden></p>
+      <button id="onboarding-signout" class="link-btn" type="button">Keluar akun</button>
+    </section>
+
+    <!-- ============================================================
+         APP
+         ============================================================ -->
+    <div id="screen-app" class="screen app-screen" hidden>
+      <header class="topbar">
+        <div class="brand compact">
+          <span class="brand-mark">
+            <span class="bulb-row"><i></i><i></i><i></i><i></i><i></i></span>
+          </span>
+          <div>
+            <p class="brand-kicker">Neon Finance OS</p>
+            <h1 class="brand-title">Efektivitas<span>Bulanan</span></h1>
+          </div>
+        </div>
+
+        <div class="topbar-center">
+          <span id="header-household" class="household-name">Rumah Tangga</span>
+          <span id="demo-badge" class="badge demo" hidden>Demo</span>
+        </div>
+
+        <div class="topbar-right">
+          <div class="month-control">
+            <button id="month-prev" class="icon-btn" type="button" aria-label="Bulan sebelumnya">‹</button>
+            <input id="month-input" type="month" aria-label="Pilih bulan" />
+            <button id="month-next" class="icon-btn" type="button" aria-label="Bulan berikutnya">›</button>
+          </div>
+          <div class="user-chip">
+            <span id="header-user">User</span>
+            <button id="signout-btn" class="icon-btn" type="button" title="Keluar" aria-label="Keluar">
+              ⏻
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+        <nav class="side-nav" aria-label="Menu utama">
+          <button class="nav-btn active" data-tab="dashboard" type="button">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+            </span>
+            Dashboard
+          </button>
+          <button class="nav-btn" data-tab="budget" type="button">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /><path d="M3 7V6a2 2 0 0 1 2-2h11" /><circle cx="16.5" cy="13" r="1" /></svg>
+            </span>
+            Budget
+          </button>
+          <button class="nav-btn" data-tab="expenses" type="button">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" /><circle cx="19" cy="18" r="1.5" /></svg>
+            </span>
+            Pengeluaran
+          </button>
+          <button class="nav-btn" data-tab="menu" type="button">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24"><path d="M4 11h16a8 8 0 0 1-16 0Z" /><path d="M8 7c0-2 2-2 2-4M12 7c0-2 2-2 2-4M16 7c0-2 2-2 2-4" /></svg>
+            </span>
+            Menu &amp; Jajan
+          </button>
+          <button class="nav-btn" data-tab="settings" type="button">
+            <span class="nav-ico">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1" /></svg>
+            </span>
+            Pengaturan
+          </button>
+          <div class="nav-foot"><span class="status-dot"></span> Sistem Online</div>
+        </nav>
+
+        <main class="main">
+          <!-- DASHBOARD -->
+          <section id="tab-dashboard" class="tab-panel">
+            <div class="page-head">
+              <div>
+                <p class="eyebrow">Dashboard</p>
+                <h1 id="dash-month-title">November 2026</h1>
+              </div>
+              <button id="dash-add-expense" class="btn primary small" type="button">
+                + Catat Pengeluaran
+              </button>
+            </div>
+
+            <div class="stat-grid">
+              <article class="stat-card cyan">
+                <span class="stat-label">Budget Bulan Ini</span>
+                <strong id="stat-budget">Rp0</strong>
+                <span class="stat-sub">Budget awal + tambahan</span>
+              </article>
+              <article class="stat-card magenta">
+                <span class="stat-label">Terpakai</span>
+                <strong id="stat-spent">Rp0</strong>
+                <span id="stat-spent-sub" class="stat-sub">0 transaksi</span>
+              </article>
+              <article class="stat-card" id="stat-remaining-card">
+                <span class="stat-label">Sisa Budget</span>
+                <strong id="stat-remaining">Rp0</strong>
+                <span id="stat-remaining-sub" class="stat-sub">Aman</span>
+              </article>
+              <article class="stat-card lime">
+                <span class="stat-label">Aman / Hari</span>
+                <strong id="stat-daily">Rp0</strong>
+                <span id="stat-daily-sub" class="stat-sub">0 hari tersisa</span>
+              </article>
+            </div>
+
+            <div class="panel progress-panel">
+              <div class="progress-head">
+                <span>Pemakaian budget</span>
+                <span id="progress-label">0%</span>
+              </div>
+              <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+              <p id="progress-detail">Rp0 dari Rp0</p>
+            </div>
+
+            <div class="dash-grid">
+              <div class="panel chart-card span-2">
+                <div class="panel-head">
+                  <h2>Arus Budget</h2>
+                  <span class="panel-tag">Kumulatif</span>
+                </div>
+                <div class="chart-wrap"><canvas id="chart-flow"></canvas></div>
+              </div>
+
+              <div class="panel chart-card">
+                <div class="panel-head">
+                  <h2>Kategori</h2>
+                  <span class="panel-tag">Pengeluaran</span>
+                </div>
+                <div class="chart-wrap chart-wrap-sm">
+                  <canvas id="chart-categories"></canvas>
+                  <div id="category-empty" class="chart-empty" hidden>Belum ada pengeluaran</div>
+                </div>
+              </div>
+
+              <div class="panel chart-card">
+                <div class="panel-head">
+                  <h2>Harian</h2>
+                  <span class="panel-tag">Distribusi</span>
+                </div>
+                <div class="chart-wrap chart-wrap-sm"><canvas id="chart-daily"></canvas></div>
+              </div>
+
+              <div class="panel insight-card">
+                <div class="panel-head">
+                  <h2>Insight</h2>
+                  <span class="panel-tag">Auto</span>
+                </div>
+                <p id="dash-insight">—</p>
+                <div id="dash-top-cat" class="top-cat"></div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Transaksi Terakhir</h2>
+                <button class="link-btn" type="button" data-goto="expenses">Lihat semua</button>
+              </div>
+              <ul id="dash-recent" class="recent-list"></ul>
+            </div>
+          </section>
+
+          <!-- BUDGET -->
+          <section id="tab-budget" class="tab-panel" hidden>
+            <div class="page-head">
+              <div>
+                <p class="eyebrow">Budget</p>
+                <h1 id="budget-month-title">November 2026</h1>
+              </div>
+            </div>
+
+            <div class="stat-grid three">
+              <article class="stat-card cyan">
+                <span class="stat-label">Total Budget</span>
+                <strong id="budget-total">Rp0</strong>
+                <span class="stat-sub">Awal + tambahan</span>
+              </article>
+              <article class="stat-card magenta">
+                <span class="stat-label">Terpakai</span>
+                <strong id="budget-spent">Rp0</strong>
+                <span class="stat-sub">Semua pengeluaran</span>
+              </article>
+              <article class="stat-card">
+                <span class="stat-label">Sisa</span>
+                <strong id="budget-remaining">Rp0</strong>
+                <span class="stat-sub">Otomatis dihitung</span>
+              </article>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Tambah / Atur Budget</h2>
+                <span class="panel-tag">Otomatis +</span>
+              </div>
+              <div class="preset-row">
+                <button class="chip" type="button" data-budget-preset="awal">Budget awal bulan</button>
+                <button class="chip" type="button" data-budget-preset="tambahan">Tambahan budget</button>
+              </div>
+              <form id="budget-form" class="form-grid inline-form">
+                <label>
+                  Tanggal
+                  <input id="budget-date" type="date" required />
+                </label>
+                <label>
+                  Keterangan
+                  <input id="budget-description" type="text" maxlength="120" placeholder="Budget awal / tambahan" required />
+                </label>
+                <label>
+                  Jumlah (Rp)
+                  <input id="budget-amount" type="number" min="1" step="1" placeholder="1000000" required />
+                </label>
+                <button class="btn primary" type="submit">Tambah Budget</button>
+              </form>
+              <p class="hint" style="margin-top: 10px">
+                Setiap budget yang ditambahkan otomatis menambah sisa. Setiap pengeluaran otomatis
+                mengurangi sisa.
+              </p>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Riwayat Budget</h2>
+                <span id="budget-count" class="panel-tag">0 entri</span>
+              </div>
+              <ul id="budget-list" class="entry-list"></ul>
+              <p id="budget-empty" class="empty-state" hidden>
+                Belum ada budget untuk bulan ini. Tambahkan budget awal dulu.
+              </p>
+            </div>
+          </section>
+
+          <!-- EXPENSES -->
+          <section id="tab-expenses" class="tab-panel" hidden>
+            <div class="page-head">
+              <div>
+                <p class="eyebrow">Pengeluaran</p>
+                <h1 id="expense-month-title">November 2026</h1>
+              </div>
+              <div class="head-meta">
+                <span id="expense-total">Rp0</span>
+                <span id="expense-count">0 transaksi</span>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Catat Pengeluaran</h2>
+                <span class="panel-tag">Otomatis −</span>
+              </div>
+              <form id="expense-form" class="form-grid inline-form">
+                <label>
+                  Tanggal
+                  <input id="expense-date" type="date" required />
+                </label>
+                <label>
+                  Deskripsi
+                  <input id="expense-description" type="text" maxlength="120" placeholder="Contoh: Jotoast" required />
+                </label>
+                <label>
+                  Kategori
+                  <select id="expense-category"></select>
+                </label>
+                <label>
+                  Jumlah (Rp)
+                  <input id="expense-amount" type="number" min="1" step="1" placeholder="20000" required />
+                </label>
+                <button class="btn primary" type="submit">Catat</button>
+              </form>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <h2>Daftar Pengeluaran</h2>
+                <span id="expense-filter-count" class="panel-tag">0 tampil</span>
+              </div>
+              <div class="filter-row">
+                <input id="expense-search" type="search" placeholder="Cari deskripsi atau kategori..." />
+                <select id="expense-filter-category"></select>
+              </div>
+              <div id="expense-list" class="date-groups"></div>
+              <p id="expense-empty" class="empty-state" hidden>
+                Belum ada pengeluaran. Catat yang pertama di atas.
+              </p>
+            </div>
+          </section>
+
+          <!-- MENU -->
+          <section id="tab-menu" class="tab-panel" hidden>
+            <div class="page-head">
+              <div>
+                <p class="eyebrow">Menu &amp; Jajan</p>
+                <h1>Preset Cepat</h1>
+              </div>
+              <button id="menu-add-btn" class="btn primary small" type="button">+ Tambah Menu</button>
+            </div>
+            <p class="page-desc">
+              Daftar masakan dan jajanan favorit. Klik "Catat" untuk langsung mengisi form
+              pengeluaran.
+            </p>
+
+            <div class="menu-grid">
+              <div class="panel">
+                <div class="panel-head">
+                  <h2>Masak Kos</h2>
+                  <span id="menu-masak-count" class="panel-tag">0 item</span>
+                </div>
+                <ul id="menu-masak-list" class="menu-list"></ul>
+                <p id="menu-masak-empty" class="empty-state" hidden>Belum ada menu masak.</p>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h2>Jajan Makan Pokok</h2>
+                  <span id="menu-jajan-count" class="panel-tag">0 item</span>
+                </div>
+                <ul id="menu-jajan-list" class="menu-list"></ul>
+                <p id="menu-jajan-empty" class="empty-state" hidden>Belum ada menu jajan.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- SETTINGS -->
+          <section id="tab-settings" class="tab-panel" hidden>
+            <div class="page-head">
+              <div>
+                <p class="eyebrow">Pengaturan</p>
+                <h1>Rumah Tangga</h1>
+              </div>
+            </div>
+
+            <div class="settings-grid">
+              <div class="panel">
+                <div class="panel-head"><h2>Profil</h2></div>
+                <p class="muted">Login sebagai <strong id="settings-email">—</strong></p>
+                <form id="settings-display-form" class="form-grid">
+                  <label>
+                    Nama tampilan
+                    <input id="settings-display-name" maxlength="40" />
+                  </label>
+                  <button class="btn ghost" type="submit">Simpan Nama</button>
+                </form>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><h2>Rumah Tangga</h2></div>
+                <form id="settings-household-form" class="form-grid">
+                  <label>
+                    Nama rumah tangga
+                    <input id="settings-household-name" maxlength="60" />
+                  </label>
+                  <button class="btn ghost" type="submit">Simpan</button>
+                </form>
+                <div class="invite-box">
+                  <span class="invite-label">Kode undangan</span>
+                  <strong id="settings-invite-code">—</strong>
+                  <div class="row-actions">
+                    <button id="copy-invite" type="button">Salin</button>
+                    <button id="rotate-invite" type="button">Ganti</button>
+                  </div>
+                </div>
+                <p class="hint" style="margin-top: 10px">
+                  Bagikan kode ini ke pasangan setelah dia daftar akun.
+                </p>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h2>Anggota</h2>
+                  <span id="settings-member-count" class="panel-tag">0 anggota</span>
+                </div>
+                <ul id="settings-members" class="member-list"></ul>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head"><h2>Data &amp; Akses</h2></div>
+                <div class="settings-actions">
+                  <button id="settings-export" class="btn ghost" type="button">Export JSON</button>
+                  <button id="settings-reset-demo" class="btn ghost" type="button" hidden>
+                    Reset Data Demo
+                  </button>
+                  <button id="settings-leave" class="btn danger" type="button">Keluar Rumah Tangga</button>
+                  <button id="settings-signout" class="btn ghost" type="button">Keluar Akun</button>
+                </div>
+                <p id="demo-settings-note" class="hint" style="margin-top: 12px" hidden>
+                  Mode demo: data hanya tersimpan di browser ini. Hubungkan Supabase agar tersimpan
+                  online dan bisa dipakai berdua.
+                </p>
+                <p class="hint" style="margin-top: 12px">
+                  Jangan bagikan service_role key. Anon key aman selama RLS aktif.
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         ENTRY DIALOG
+         ============================================================ -->
+    <dialog id="entry-dialog" class="neon-dialog">
+      <form id="entry-form">
+        <h2 id="entry-dialog-title">Catat pengeluaran</h2>
+        <input id="entry-id" type="hidden" />
+        <input id="entry-type" type="hidden" value="expense" />
+        <div class="form-grid">
+          <label>
+            Tanggal
+            <input id="entry-date" type="date" required />
+          </label>
+          <label>
+            Deskripsi
+            <input id="entry-description" type="text" maxlength="120" placeholder="Contoh: Jotoast" required />
+          </label>
+          <label>
+            Kategori
+            <select id="entry-category"></select>
+          </label>
+          <label>
+            Jumlah (Rp)
+            <input id="entry-amount" type="number" min="1" step="1" placeholder="20000" required />
+          </label>
+          <p id="entry-error" class="form-error" hidden></p>
+        </div>
+        <div class="dialog-actions">
+          <button id="entry-delete" class="btn danger tiny" type="button" hidden>Hapus</button>
+          <button id="entry-cancel" class="btn ghost" type="button">Batal</button>
+          <button id="entry-submit" class="btn primary" type="submit">Simpan</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- ============================================================
+         MENU DIALOG
+         ============================================================ -->
+    <dialog id="menu-dialog" class="neon-dialog">
+      <form id="menu-dialog-form">
+        <h2 id="menu-dialog-title">Tambah menu</h2>
+        <input id="menu-id" type="hidden" />
+        <div class="form-grid">
+          <label>
+            Nama menu
+            <input id="menu-name" type="text" maxlength="80" placeholder="Contoh: Tempe Goreng" required />
+          </label>
+          <label>
+            Jenis
+            <select id="menu-kind">
+              <option value="masak">Masak Kos</option>
+              <option value="jajan">Jajan Makan Pokok</option>
+            </select>
+          </label>
+          <label>
+            Kategori
+            <select id="menu-category"></select>
+          </label>
+          <label>
+            Harga preset (Rp)
+            <input id="menu-amount" type="number" min="0" step="1" placeholder="5000" />
+          </label>
+          <p id="menu-error" class="form-error" hidden></p>
+        </div>
+        <div class="dialog-actions">
+          <button id="menu-delete" class="btn danger tiny" type="button" hidden>Hapus</button>
+          <button id="menu-cancel" class="btn ghost" type="button">Batal</button>
+          <button id="menu-submit" class="btn primary" type="submit">Simpan</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast-stack" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
