@@ -18,16 +18,16 @@
   }
 
   var CATEGORY_COLORS = {
-    "Makan Pokok": "#00f0ff",
-    "Jajan": "#ff2bd6",
-    "Masak Kos": "#b6ff3b",
-    "Transport": "#ffb020",
-    "Kebutuhan": "#8b5cff",
-    "Lainnya": "#7f9db0",
-    "Budget": "#00f0ff"
+    "Makan Pokok": "#8a6a3f",
+    "Jajan": "#a04a3a",
+    "Masak Kos": "#3f6b52",
+    "Transport": "#b08a57",
+    "Kebutuhan": "#5b6b7a",
+    "Lainnya": "#9a9084",
+    "Budget": "#3f6b52"
   };
 
-  var PALETTE = ["#00f0ff", "#ff2bd6", "#b6ff3b", "#ffb020", "#8b5cff", "#ff4d6d", "#3ddc97"];
+  var PALETTE = ["#8a6a3f", "#a04a3a", "#3f6b52", "#b08a57", "#5b6b7a", "#9a9084", "#6f7d6a"];
 
   var state = {
     screen: "welcome",
@@ -447,19 +447,20 @@
       plugins: {
         legend: {
           labels: {
-            color: "#9fc7d8",
-            font: { family: "Rajdhani", size: 12 },
-            boxWidth: 12,
-            boxHeight: 12
+            color: "#4a453d",
+            font: { family: "Manrope", size: 11 },
+            boxWidth: 10,
+            boxHeight: 10
           }
         },
         tooltip: {
-          backgroundColor: "rgba(4,8,18,.96)",
-          borderColor: "rgba(0,240,255,.35)",
+          backgroundColor: "#1f2e27",
+          borderColor: "#1f2e27",
           borderWidth: 1,
-          titleColor: "#e6faff",
-          bodyColor: "#b7dbe8",
-          padding: 10,
+          titleColor: "#f5efe4",
+          bodyColor: "#d8d2c6",
+          padding: 12,
+          cornerRadius: 2,
           callbacks: {
             label: function (ctx) {
               return " " + ctx.dataset.label + ": " + EFB.money(ctx.parsed.y);
@@ -469,20 +470,20 @@
       },
       scales: {
         x: {
-          grid: { color: "rgba(0,240,255,.06)" },
+          grid: { color: "rgba(28,26,23,.07)" },
           ticks: {
-            color: "#6f93a6",
-            font: { family: "Rajdhani" },
+            color: "#8a8175",
+            font: { family: "Manrope", size: 11 },
             maxRotation: 0,
             autoSkip: true
           }
         },
         y: {
           beginAtZero: true,
-          grid: { color: "rgba(0,240,255,.06)" },
+          grid: { color: "rgba(28,26,23,.07)" },
           ticks: {
-            color: "#6f93a6",
-            font: { family: "Rajdhani" },
+            color: "#8a8175",
+            font: { family: "Manrope", size: 11 },
             callback: function (value) {
               return EFB.shortMoney(value);
             }
@@ -534,10 +535,10 @@
       {
         label: "Kumulatif pengeluaran",
         data: cumulative,
-        borderColor: "#00f0ff",
-        backgroundColor: "rgba(0,240,255,.10)",
+        borderColor: "#8a6a3f",
+        backgroundColor: "rgba(138,106,63,.10)",
         fill: true,
-        tension: 0.35,
+        tension: 0.3,
         pointRadius: 0,
         pointHoverRadius: 4,
         borderWidth: 2
@@ -550,8 +551,8 @@
         data: labels.map(function () {
           return s.totalBudget;
         }),
-        borderColor: "#ff2bd6",
-        borderDash: [6, 6],
+        borderColor: "#1f2e27",
+        borderDash: [4, 4],
         borderWidth: 1.5,
         pointRadius: 0,
         fill: false
@@ -587,7 +588,7 @@
           {
             data: catData,
             backgroundColor: catColors,
-            borderColor: "#04060e",
+            borderColor: "#fffdf8",
             borderWidth: 2,
             hoverOffset: 6
           }
@@ -596,23 +597,25 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: "66%",
+        cutout: "68%",
         plugins: {
           legend: {
             position: "bottom",
             labels: {
-              color: "#9fc7d8",
-              font: { family: "Rajdhani", size: 11 },
-              boxWidth: 10,
-              boxHeight: 10
+              color: "#4a453d",
+              font: { family: "Manrope", size: 10 },
+              boxWidth: 9,
+              boxHeight: 9
             }
           },
           tooltip: {
-            backgroundColor: "rgba(4,8,18,.96)",
-            borderColor: "rgba(255,43,214,.35)",
+            backgroundColor: "#1f2e27",
+            borderColor: "#1f2e27",
             borderWidth: 1,
-            titleColor: "#e6faff",
-            bodyColor: "#b7dbe8",
+            titleColor: "#f5efe4",
+            bodyColor: "#d8d2c6",
+            padding: 12,
+            cornerRadius: 2,
             callbacks: {
               label: function (ctx) {
                 return " " + ctx.label + ": " + EFB.money(ctx.parsed);
@@ -625,7 +628,7 @@
 
     var todayDay = state.month === EFB.monthKey() ? new Date().getDate() : -1;
     var barColors = daily.map(function (value, index) {
-      return index + 1 === todayDay ? "#ff2bd6" : "rgba(0,240,255,.55)";
+      return index + 1 === todayDay ? "#8a6a3f" : "rgba(31,46,39,.28)";
     });
 
     makeChart("chart-daily", {

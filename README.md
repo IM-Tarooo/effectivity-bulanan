@@ -1,6 +1,6 @@
 # Efektivitas Bulanan
 
-Pengatur keuangan bulanan bergaya **neon circuit** untuk dipakai berdua. Web statis (HTML/CSS/JS) + Supabase untuk login dan penyimpanan data. Bisa di-hosting gratis di GitHub Pages.
+Pengatur keuangan bulanan bergaya **editorial-luxury** untuk dipakai berdua. Web statis (HTML/CSS/JS) + Supabase untuk login dan penyimpanan data. Bisa di-hosting gratis di GitHub Pages.
 
 > **Mode demo** tersedia tanpa backend. Data demo disimpan di `localStorage` browser.
 
@@ -15,6 +15,7 @@ Pengatur keuangan bulanan bergaya **neon circuit** untuk dipakai berdua. Web sta
 - **Export JSON** untuk backup.
 - **Realtime** (Supabase): perubahan dari akun pasangan langsung tersinkron.
 - **Keamanan**: Supabase Auth + Row Level Security (RLS). Anon key aman di frontend selama RLS aktif.
+- **Tampilan**: kertas hangat, hijau tua, aksen emas, tipografi Fraunces + Manrope.
 
 ## Struktur
 
@@ -73,7 +74,7 @@ Repo: `https://github.com/IM-Tarooo/effectivity-bulanan`
 ```bash
 git init
 git add .
-git commit -m "feat: efektivitas bulanan neon finance app"
+git commit -m "feat: efektivitas bulanan finance app"
 git branch -M main
 git remote add origin https://github.com/IM-Tarooo/effectivity-bulanan.git
 git push -u origin main
