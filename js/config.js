@@ -14,8 +14,8 @@
  */
 (function () {
   var defaults = {
-    SUPABASE_URL: "",
-    SUPABASE_ANON_KEY: "",
+    SUPABASE_URL: "https://cntuzjthzvmwuoulqjkt.supabase.co",
+    SUPABASE_ANON_KEY: "sb_publishable_XiMobgI3lQWTPmyP-va8QA_hyrBRm7p",
     APP_NAME: "Efektivitas Bulanan"
   };
 
