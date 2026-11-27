@@ -64,6 +64,9 @@
     fillCategorySelect($("#expense-filter-category"), true);
     fillMenuCategorySelect($("#menu-category"));
 
+    var resetConfig = $("#auth-reset-config");
+    if (resetConfig && localStorage.getItem("efb_config")) resetConfig.hidden = false;
+
     if (!Store.hasBackend) {
       showScreen("welcome");
       return;
@@ -329,7 +332,12 @@
 
     var insight;
     if (s.totalBudget <= 0) {
-      insight = "Belum ada budget untuk bulan ini. Tambahkan budget awal di menu Budget supaya sisa otomatis terhitung.";
+      insight =
+        s.totalExpense > 0
+          ? "Belum ada budget, tapi sudah ada pengeluaran " +
+            EFB.money(s.totalExpense) +
+            ". Tambahkan budget awal di menu Budget."
+          : "Belum ada budget untuk bulan ini. Tambahkan budget awal di menu Budget supaya sisa otomatis terhitung.";
     } else if (s.remaining < 0) {
       insight = "Over budget " + EFB.money(Math.abs(s.remaining)) + ". Kurangi pengeluaran atau tambah budget.";
     } else if (s.daysLeft > 0) {
@@ -1442,6 +1450,8 @@
       [/Kode undangan tidak ditemukan/i, "Kode undangan tidak ditemukan."],
       [/sudah tergabung/i, "Akun ini sudah tergabung dalam rumah tangga."],
       [/Failed to fetch|NetworkError|Load failed/i, "Tidak bisa menghubungi server. Cek koneksi internet dan konfigurasi Supabase."],
+      [/Invalid API key|apikey/i, "Anon key Supabase tidak valid. Cek konfigurasi."],
+      [/Invalid URL|Failed to construct/i, "URL Supabase tidak valid. Cek konfigurasi."],
       [/JWT|token/i, "Sesi login bermasalah. Coba masuk ulang."],
       [/duplicate key|unique constraint/i, "Data sudah ada. Coba lagi."]
     ];
@@ -1505,6 +1515,15 @@
 
     var authForm = $("#auth-form");
     if (authForm) authForm.addEventListener("submit", submitAuthForm);
+
+    var resetConfig = $("#auth-reset-config");
+    if (resetConfig) {
+      resetConfig.addEventListener("click", function () {
+        if (!window.confirm("Hapus konfigurasi Supabase yang tersimpan di browser ini?")) return;
+        localStorage.removeItem("efb_config");
+        window.location.reload();
+      });
+    }
 
     var createForm = $("#create-household-form");
     if (createForm) createForm.addEventListener("submit", submitCreateHousehold);

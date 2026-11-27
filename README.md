@@ -123,7 +123,8 @@ Semua tabel memakai RLS: user hanya bisa mengakses data rumah tangga tempat dia 
 | Data tidak muncul | Pastikan user sudah tergabung di rumah tangga. Cek RLS aktif. |
 | Grafik kosong | Pastikan Chart.js CDN tidak diblokir. Coba refresh. |
 | Perubahan pasangan tidak muncul | Refresh halaman. Realtime butuh tabel `entries` di publication Supabase. |
-| Ingin ganti project Supabase | Hapus `efb_config` di localStorage, atau edit `js/config.js`. |
+| Ingin ganti project Supabase | Klik **Ganti koneksi Supabase** di halaman login, hapus `efb_config` di localStorage, atau edit `js/config.js`. |
+| `git push` ditolak 403 / Permission denied | Login sebagai pemilik repo: `gh auth login` lalu pilih akun `IM-Tarooo`, atau tambahkan akun yang dipakai sebagai collaborator repo. |
 
 ## Keamanan
 
