@@ -578,3 +578,6 @@ begin
     values (r.id, v_code, v_token, r.owner_id, now());
   end loop;
 end $$;
+
+-- Muat ulang schema cache PostgREST agar tabel baru langsung dikenali.
+notify pgrst, 'reload schema';
