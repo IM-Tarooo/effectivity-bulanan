@@ -129,6 +129,44 @@
     accessQrToken: null
   };
 
+  var THEME_KEY = "efb_theme";
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function applyTheme(theme) {
+    var next = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.style.colorScheme = next;
+
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch (e) {}
+
+    var scheme = $('meta[name="color-scheme"]');
+    if (scheme) scheme.setAttribute("content", next);
+    var color = $('meta[name="theme-color"]');
+    if (color) color.setAttribute("content", next === "dark" ? "#111512" : "#f4efe6");
+
+    renderThemeSetting();
+  }
+
+  function renderThemeSetting() {
+    var theme = currentTheme();
+    setText("#theme-current", theme === "dark" ? "Gelap" : "Terang");
+    $$("[data-theme-choice]").forEach(function (button) {
+      var active = button.getAttribute("data-theme-choice") === theme;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function themeColor(name, fallback) {
+    var value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
   document.addEventListener("DOMContentLoaded", init);
 
   /* ==========================================================
@@ -136,6 +174,7 @@
    * ========================================================== */
   async function init() {
     bindStaticEvents();
+    applyTheme(currentTheme());
 
     var monthInput = $("#month-input");
     if (monthInput) monthInput.value = state.month;
@@ -501,7 +540,15 @@
 
     var byPocket = {};
     ["owner", "partner", "shared"].forEach(function (key) {
-      byPocket[key] = { budget: 0, expense: 0, remaining: 0, pct: 0, budgetCount: 0, expenseCount: 0 };
+      byPocket[key] = {
+        budget: 0,
+        expense: 0,
+        sharedShare: 0,
+        remaining: 0,
+        pct: 0,
+        budgetCount: 0,
+        expenseCount: 0
+      };
     });
 
     budgets.forEach(function (e) {
@@ -512,6 +559,20 @@
 
     expenses.forEach(function (e) {
       var key = byPocket[e.pocket] ? e.pocket : "shared";
+
+      if (key === "shared") {
+        var half = e.amount / 2;
+        byPocket.shared.expense += e.amount;
+        byPocket.shared.expenseCount += 1;
+        byPocket.owner.expense += half;
+        byPocket.owner.sharedShare += half;
+        byPocket.owner.expenseCount += 1;
+        byPocket.partner.expense += half;
+        byPocket.partner.sharedShare += half;
+        byPocket.partner.expenseCount += 1;
+        return;
+      }
+
       byPocket[key].expense += e.amount;
       byPocket[key].expenseCount += 1;
     });
@@ -571,6 +632,9 @@
         var count = isShared ? summary.expenses.length : pocket.expenseCount;
         var sub =
           "Budget " + EFB.money(budget) + " · terpakai " + EFB.money(expense);
+        if (!isShared && pocket.sharedShare > 0) {
+          sub += " · bagi 2 bareng " + EFB.money(pocket.sharedShare);
+        }
         return (
           '<article class="pocket-card" style="--pocket-color:' + meta.color + '">' +
           '<div class="pocket-card-head"><span class="pocket-dot"></span><span>' + esc(title) + "</span></div>" +
@@ -793,6 +857,13 @@
   }
 
   function chartBaseOptions(extra) {
+    var legendColor = themeColor("--ink-2", "#4a453d");
+    var tickColor = themeColor("--muted", "#8a8175");
+    var gridColor = themeColor("--line", "rgba(28,26,23,.07)");
+    var tooltipBg = themeColor("--forest", "#1f2e27");
+    var tooltipTitle = themeColor("--paper", "#f5efe4");
+    var tooltipBody = themeColor("--muted", "#d8d2c6");
+
     var base = {
       responsive: true,
       maintainAspectRatio: false,
@@ -800,18 +871,18 @@
       plugins: {
         legend: {
           labels: {
-            color: "#4a453d",
+            color: legendColor,
             font: { family: "Manrope", size: 11 },
             boxWidth: 10,
             boxHeight: 10
           }
         },
         tooltip: {
-          backgroundColor: "#1f2e27",
-          borderColor: "#1f2e27",
+          backgroundColor: tooltipBg,
+          borderColor: tooltipBg,
           borderWidth: 1,
-          titleColor: "#f5efe4",
-          bodyColor: "#d8d2c6",
+          titleColor: tooltipTitle,
+          bodyColor: tooltipBody,
           padding: 12,
           cornerRadius: 2,
           callbacks: {
@@ -823,9 +894,9 @@
       },
       scales: {
         x: {
-          grid: { color: "rgba(28,26,23,.07)" },
+          grid: { color: gridColor },
           ticks: {
-            color: "#8a8175",
+            color: tickColor,
             font: { family: "Manrope", size: 11 },
             maxRotation: 0,
             autoSkip: true
@@ -833,9 +904,9 @@
         },
         y: {
           beginAtZero: true,
-          grid: { color: "rgba(28,26,23,.07)" },
+          grid: { color: gridColor },
           ticks: {
-            color: "#8a8175",
+            color: tickColor,
             font: { family: "Manrope", size: 11 },
             callback: function (value) {
               return EFB.shortMoney(value);
@@ -888,8 +959,8 @@
       {
         label: "Kumulatif pengeluaran",
         data: cumulative,
-        borderColor: "#8a6a3f",
-        backgroundColor: "rgba(138,106,63,.10)",
+        borderColor: themeColor("--accent", "#8a6a3f"),
+        backgroundColor: themeColor("--accent-soft", "rgba(138,106,63,.10)"),
         fill: true,
         tension: 0.3,
         pointRadius: 0,
@@ -904,7 +975,7 @@
         data: labels.map(function () {
           return s.totalBudget;
         }),
-        borderColor: "#1f2e27",
+        borderColor: themeColor("--ink-2", "#1f2e27"),
         borderDash: [4, 4],
         borderWidth: 1.5,
         pointRadius: 0,
@@ -941,7 +1012,7 @@
           {
             data: catData,
             backgroundColor: catColors,
-            borderColor: "#fffdf8",
+            borderColor: themeColor("--surface", "#fffdf8"),
             borderWidth: 2,
             hoverOffset: 6
           }
@@ -955,18 +1026,18 @@
           legend: {
             position: "bottom",
             labels: {
-              color: "#4a453d",
+              color: themeColor("--ink-2", "#4a453d"),
               font: { family: "Manrope", size: 10 },
               boxWidth: 9,
               boxHeight: 9
             }
           },
           tooltip: {
-            backgroundColor: "#1f2e27",
-            borderColor: "#1f2e27",
+            backgroundColor: themeColor("--forest", "#1f2e27"),
+            borderColor: themeColor("--forest", "#1f2e27"),
             borderWidth: 1,
-            titleColor: "#f5efe4",
-            bodyColor: "#d8d2c6",
+            titleColor: themeColor("--paper", "#f5efe4"),
+            bodyColor: themeColor("--muted", "#d8d2c6"),
             padding: 12,
             cornerRadius: 2,
             callbacks: {
@@ -981,7 +1052,9 @@
 
     var todayDay = state.month === EFB.monthKey() ? new Date().getDate() : -1;
     var barColors = daily.map(function (value, index) {
-      return index + 1 === todayDay ? "#8a6a3f" : "rgba(31,46,39,.28)";
+      return index + 1 === todayDay
+        ? themeColor("--accent", "#8a6a3f")
+        : themeColor("--line-strong", "rgba(31,46,39,.28)");
     });
 
     makeChart("chart-daily", {
@@ -1211,6 +1284,7 @@
   function renderSettings() {
     if (!state.user) return;
 
+    renderThemeSetting();
     setText("#settings-email", state.user.email || "—");
     setText("#settings-member-count", state.members.length + " anggota");
 
@@ -2028,6 +2102,13 @@
    * EVENTS
    * ========================================================== */
   function bindStaticEvents() {
+    $$("[data-theme-choice]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        applyTheme(button.getAttribute("data-theme-choice"));
+        if (state.user) renderAll();
+      });
+    });
+
     var welcomeDemo = $("#welcome-demo-btn");
     if (welcomeDemo) {
       welcomeDemo.addEventListener("click", async function () {

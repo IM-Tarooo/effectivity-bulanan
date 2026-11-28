@@ -7,8 +7,9 @@ Pengatur keuangan bulanan bergaya **editorial-luxury** untuk dipakai berdua. Web
 ## Fitur
 
 - **Dashboard**: total budget, terpakai, sisa, aman/hari, progress bar, grafik kumulatif, donut kategori, bar harian, insight otomatis, transaksi terakhir.
-- **Dua saku + bareng**: saku Malik (cyan), saku Irna (pink), dan total bareng (emas). Budget dan pengeluaran bisa dicatat per saku.
+- **Dua saku + bareng**: saku Malik (cyan), saku Irna (pink), dan total bareng (emas). Budget dan pengeluaran bisa dicatat per saku. Pengeluaran bareng dibagi 50:50 ke saku Malik dan Irna, lalu memotong total bareng secara penuh.
 - **Peringatan otomatis**: aman, waspada, atau kritis berdasarkan sisa dana, batas harian, dan ambang yang bisa diatur.
+- **Tema terang/gelap**: pilihan tema tersimpan di perangkat lewat **Pengaturan -> Tema Tampilan**.
 - **Budget**: set budget awal bulan dan tambahan. Sisa otomatis bertambah saat budget ditambah dan berkurang saat pengeluaran dicatat.
 - **Pengeluaran**: catat, edit, hapus, cari, filter kategori dan saku, dikelompokkan per tanggal.
 - **Menu & Makan**: preset masakan, jajanan, makan di luar, dan kebutuhan lain (harga bisa diubah). Klik **Catat** untuk langsung mengisi form pengeluaran.
@@ -74,8 +75,9 @@ Reset data demo: **Pengaturan -> Reset Data Demo**.
 
 ## Saku dan peringatan
 
-- **Saku Malik** (owner, cyan) dan **Saku Irna** (pasangan, pink) menghitung sisa masing-masing: budget saku dikurangi pengeluaran saku itu.
-- **Total Bareng** (emas) menghitung gabungan semua saku: total budget dikurangi semua pengeluaran.
+- **Saku Malik** (owner, cyan) dan **Saku Irna** (pasangan, pink) menghitung sisa masing-masing: budget saku dikurangi pengeluaran saku itu dan setengah dari pengeluaran **Bareng**.
+- **Total Bareng** (emas) menghitung gabungan semua saku: total budget dikurangi semua pengeluaran. Pengeluaran **Bareng** memotong total ini secara penuh.
+- Contoh: pengeluaran Bareng Rp100.000 memotong saku Malik Rp50.000, saku Irna Rp50.000, dan total bareng Rp100.000.
 - Budget baru default ke saku sesuai akun yang login. Pengeluaran baru default ke **Bareng**.
 - Setiap transaksi bisa dipindah saku lewat form tambah/edit.
 - **Pengaturan -> Saku & Peringatan** mengatur:
@@ -87,6 +89,12 @@ Reset data demo: **Pengaturan -> Reset Data Demo**.
   - **Waspada**: sisa dana di bawah/ambang waspada, dengan batas harian yang disarankan.
   - **Kritis**: sisa dana di bawah ambang kritis atau sudah minus.
 - Warna saku mengikuti anggota: owner cyan, pasangan pink, pengeluaran bareng emas.
+
+## Tema terang/gelap
+
+- Buka **Pengaturan -> Tema Tampilan**, lalu pilih **Terang** atau **Gelap**.
+- Pilihan disimpan di perangkat melalui `localStorage` dengan kunci `efb_theme`, jadi tidak mengubah data rumah tangga dan tidak perlu schema baru.
+- Tema diterapkan sebelum halaman dirender untuk menghindari kedip, dan warna grafik ikut menyesuaikan tema.
 
 ## Alur 2 user
 
