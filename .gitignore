@@ -19,6 +19,7 @@ package.json
 # Logs
 *.log
 npm-debug.log*
+supabase_logs.json
 
 # Build / cache
 dist/

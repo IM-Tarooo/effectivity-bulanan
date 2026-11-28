@@ -132,6 +132,107 @@ code {
   z-index: 1;
 }
 
+.shoreline {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.72;
+  transition: opacity 0.8s ease;
+}
+
+.shore-band {
+  position: absolute;
+  right: -14%;
+  bottom: -28%;
+  left: -14%;
+  height: 52vh;
+  border-radius: 50% 50% 0 0 / 26% 26% 0 0;
+  filter: blur(36px);
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.shore-band-a {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 164, 106, 0.28),
+    rgba(201, 164, 106, 0.04) 58%,
+    transparent 78%
+  );
+  transform: rotate(-5deg) scaleX(1.08);
+  animation: shoreDrift 16s ease-in-out infinite alternate;
+}
+
+.shore-band-b {
+  bottom: -32%;
+  height: 42vh;
+  background: linear-gradient(180deg, rgba(31, 46, 39, 0.17), transparent 72%);
+  filter: blur(46px);
+  transform: rotate(4deg) scaleX(1.12);
+  opacity: 0.7;
+  animation: shoreDriftB 21s ease-in-out -6s infinite alternate-reverse;
+}
+
+.shore-band-c {
+  bottom: -18%;
+  height: 27vh;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.72),
+    rgba(255, 253, 248, 0) 74%
+  );
+  filter: blur(22px);
+  transform: rotate(-2deg) scaleX(1.04);
+  opacity: 0.62;
+}
+
+.shore-glint {
+  position: absolute;
+  right: 7%;
+  bottom: 4.5vh;
+  left: 7%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 164, 106, 0.45),
+    rgba(255, 253, 248, 0.8),
+    rgba(201, 164, 106, 0.38),
+    transparent
+  );
+  filter: blur(0.2px);
+  opacity: 0.55;
+  transform: rotate(-2.4deg);
+}
+
+body[data-screen="auth"] .shoreline {
+  opacity: 0.3;
+}
+
+body[data-screen="app"] .shoreline {
+  opacity: 0.38;
+}
+
+@keyframes shoreDrift {
+  from {
+    transform: rotate(-5deg) scaleX(1.08) translate3d(-1.2%, 0, 0);
+  }
+  to {
+    transform: rotate(-3.6deg) scaleX(1.12) translate3d(1.2%, -1%, 0);
+  }
+}
+
+@keyframes shoreDriftB {
+  from {
+    transform: rotate(4deg) scaleX(1.12) translate3d(1%, 0, 0);
+  }
+  to {
+    transform: rotate(2.4deg) scaleX(1.08) translate3d(-1%, -1%, 0);
+  }
+}
+
 .welcome-screen,
 .auth-screen,
 .onboarding-screen {
@@ -373,7 +474,122 @@ code {
   font-size: 13px;
 }
 
+.auth-screen {
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.auth-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.auth-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      116deg,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 13px
+    ),
+    radial-gradient(900px 540px at 82% 16%, rgba(201, 164, 106, 0.2), transparent 64%),
+    radial-gradient(760px 620px at 100% 100%, rgba(176, 138, 87, 0.16), transparent 62%),
+    linear-gradient(145deg, #263a30 0%, #1a2821 52%, #101a15 100%);
+  clip-path: polygon(66% 0, 100% 0, 100% 100%, 54% 100%);
+}
+
+.auth-atmosphere::before {
+  content: "";
+  position: absolute;
+  top: 14%;
+  right: 5%;
+  width: 46vw;
+  height: 46vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 164, 106, 0.22), transparent 68%);
+  filter: blur(42px);
+  opacity: 0.72;
+}
+
+.auth-shore {
+  position: absolute;
+  inset: 0;
+  opacity: 0.62;
+  animation: authShoreBreathe 12s ease-in-out infinite alternate;
+}
+
+.auth-shore-1 {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 164, 106, 0.3),
+    rgba(201, 164, 106, 0.03) 56%,
+    rgba(201, 164, 106, 0.16)
+  );
+  clip-path: polygon(65.4% 0, 66.6% 0, 54.6% 100%, 53.4% 100%);
+  filter: blur(2px);
+  opacity: 0.6;
+}
+
+.auth-shore-2 {
+  background: linear-gradient(
+    180deg,
+    rgba(244, 239, 230, 0.28),
+    rgba(244, 239, 230, 0.04) 52%,
+    rgba(244, 239, 230, 0.16)
+  );
+  clip-path: polygon(64.2% 0, 67.8% 0, 55.8% 100%, 52.2% 100%);
+  filter: blur(14px);
+  opacity: 0.38;
+}
+
+.auth-shore-3 {
+  background: linear-gradient(
+    180deg,
+    rgba(31, 46, 39, 0.18),
+    rgba(31, 46, 39, 0.02) 60%,
+    rgba(31, 46, 39, 0.14)
+  );
+  clip-path: polygon(62.5% 0, 69.5% 0, 57.5% 100%, 50.5% 100%);
+  filter: blur(30px);
+  opacity: 0.32;
+}
+
+.auth-shore-4 {
+  background: linear-gradient(
+    180deg,
+    rgba(201, 164, 106, 0.1),
+    transparent 58%,
+    rgba(201, 164, 106, 0.1)
+  );
+  clip-path: polygon(60% 0, 72% 0, 60% 100%, 48% 100%);
+  filter: blur(52px);
+  opacity: 0.2;
+}
+
+.auth-shore-line {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(201, 164, 106, 0),
+    rgba(216, 184, 122, 0.7) 17%,
+    rgba(255, 250, 240, 0.8) 52%,
+    rgba(201, 164, 106, 0.55) 84%,
+    rgba(201, 164, 106, 0)
+  );
+  clip-path: polygon(66% 0, 66.25% 0, 54.25% 100%, 54% 100%);
+  filter: blur(0.3px);
+  opacity: 0.8;
+  animation: authShoreGlow 9s ease-in-out infinite alternate;
+}
+
 .auth-grid {
+  position: relative;
+  z-index: 2;
   display: grid;
   width: 100%;
   max-width: 1120px;
@@ -382,13 +598,60 @@ code {
   align-items: center;
 }
 
+.auth-brand {
+  position: relative;
+  z-index: 3;
+}
+
+.auth-brand::before {
+  content: "";
+  position: absolute;
+  inset: -22px -48px -22px -24px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 38% 50%,
+    rgba(244, 239, 230, 0.98) 0%,
+    rgba(244, 239, 230, 0.9) 42%,
+    rgba(244, 239, 230, 0) 74%
+  );
+  filter: blur(8px);
+  pointer-events: none;
+}
+
 .auth-brand .hero-title {
   font-size: clamp(38px, 4.4vw, 58px);
 }
 
 .auth-card {
+  position: relative;
+  z-index: 3;
   padding: 34px;
+  border: 1px solid rgba(255, 253, 248, 0.55);
   border-top: 2px solid var(--accent);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.985), rgba(249, 245, 237, 0.96));
+  box-shadow:
+    0 34px 90px rgba(8, 14, 11, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(10px);
+}
+
+@keyframes authShoreGlow {
+  from {
+    opacity: 0.58;
+  }
+  to {
+    opacity: 0.92;
+  }
+}
+
+@keyframes authShoreBreathe {
+  from {
+    transform: translate3d(-0.35%, 0, 0) scaleX(1);
+  }
+  to {
+    transform: translate3d(0.35%, 0, 0) scaleX(1.015);
+  }
 }
 
 .auth-tabs {
@@ -1777,6 +2040,30 @@ select {
   .auth-grid {
     max-width: 560px;
     grid-template-columns: 1fr;
+  }
+
+  .auth-wash {
+    clip-path: polygon(0 48%, 100% 38%, 100% 100%, 0 100%);
+  }
+
+  .auth-shore-1 {
+    clip-path: polygon(0 46.5%, 100% 36.5%, 100% 38.5%, 0 48.5%);
+  }
+
+  .auth-shore-2 {
+    clip-path: polygon(0 45%, 100% 35%, 100% 38%, 0 48%);
+  }
+
+  .auth-shore-3 {
+    clip-path: polygon(0 43%, 100% 33%, 100% 37%, 0 47%);
+  }
+
+  .auth-shore-4 {
+    clip-path: polygon(0 40%, 100% 30%, 100% 36%, 0 46%);
+  }
+
+  .auth-shore-line {
+    clip-path: polygon(0 48%, 0 48.25%, 100% 38.25%, 100% 38%);
   }
 
   .settings-grid {
