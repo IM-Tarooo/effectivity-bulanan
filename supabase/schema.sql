@@ -437,6 +437,7 @@ alter table public.access_login_attempts enable row level security;
 revoke all on public.household_access from anon, authenticated;
 revoke all on public.access_login_attempts from anon, authenticated;
 
+grant select on public.household_members to service_role;
 grant select, insert, update, delete on public.household_access to service_role;
 grant select, insert, update, delete on public.access_login_attempts to service_role;
 grant usage, select on sequence public.access_login_attempts_id_seq to service_role;
