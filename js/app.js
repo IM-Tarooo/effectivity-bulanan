@@ -21,6 +21,7 @@
     "Makan Pokok": "#8a6a3f",
     "Jajan": "#a04a3a",
     "Masak Kos": "#3f6b52",
+    "Makan di Luar": "#8f5f3f",
     "Transport": "#b08a57",
     "Kebutuhan": "#5b6b7a",
     "Lainnya": "#9a9084",
@@ -876,12 +877,15 @@
   function renderMenu() {
     var masak = state.menu.filter(function (m) { return m.kind === "masak"; });
     var jajan = state.menu.filter(function (m) { return m.kind === "jajan"; });
+    var diluar = state.menu.filter(function (m) { return m.kind === "diluar"; });
 
     masak.sort(menuSorter);
     jajan.sort(menuSorter);
+    diluar.sort(menuSorter);
 
     setText("#menu-masak-count", masak.length + " item");
     setText("#menu-jajan-count", jajan.length + " item");
+    setText("#menu-diluar-count", diluar.length + " item");
 
     var masakList = $("#menu-masak-list");
     if (masakList) masakList.innerHTML = masak.map(menuRow).join("");
@@ -889,14 +893,25 @@
     var jajanList = $("#menu-jajan-list");
     if (jajanList) jajanList.innerHTML = jajan.map(menuRow).join("");
 
+    var diluarList = $("#menu-diluar-list");
+    if (diluarList) diluarList.innerHTML = diluar.map(menuRow).join("");
+
     var masakEmpty = $("#menu-masak-empty");
     if (masakEmpty) masakEmpty.hidden = masak.length > 0;
     var jajanEmpty = $("#menu-jajan-empty");
     if (jajanEmpty) jajanEmpty.hidden = jajan.length > 0;
+    var diluarEmpty = $("#menu-diluar-empty");
+    if (diluarEmpty) diluarEmpty.hidden = diluar.length > 0;
   }
 
   function menuSorter(a, b) {
     return (a.sortOrder || 0) - (b.sortOrder || 0) || a.name.localeCompare(b.name);
+  }
+
+  function menuDefaultCategory(kind) {
+    if (kind === "jajan") return "Jajan";
+    if (kind === "diluar") return "Makan di Luar";
+    return "Masak Kos";
   }
 
   function menuRow(item) {
@@ -1178,7 +1193,7 @@
     if (kindEl) kindEl.value = item ? item.kind : "masak";
     var catEl = $("#menu-category");
     if (catEl) {
-      var desired = (item && item.category) || "Masak Kos";
+      var desired = (item && item.category) || menuDefaultCategory(item ? item.kind : "masak");
       if (!Array.prototype.some.call(catEl.options, function (opt) { return opt.value === desired; })) {
         var extra = document.createElement("option");
         extra.value = desired;
@@ -1265,7 +1280,7 @@
     var id = ($("#menu-id") && $("#menu-id").value) || "";
     var name = ($("#menu-name") && $("#menu-name").value.trim()) || "";
     var kind = ($("#menu-kind") && $("#menu-kind").value) || "masak";
-    var category = ($("#menu-category") && $("#menu-category").value) || (kind === "masak" ? "Masak Kos" : "Jajan");
+    var category = ($("#menu-category") && $("#menu-category").value) || menuDefaultCategory(kind);
     var amount = Number(($("#menu-amount") && $("#menu-amount").value) || 0);
 
     if (!name) {
@@ -1628,7 +1643,7 @@
 
   function fillMenuCategorySelect(select) {
     if (!select) return;
-    var categories = ["Masak Kos", "Jajan", "Makan Pokok", "Kebutuhan", "Lainnya"];
+    var categories = ["Masak Kos", "Jajan", "Makan di Luar", "Makan Pokok", "Kebutuhan", "Lainnya"];
     select.innerHTML = categories
       .map(function (cat) {
         return '<option value="' + esc(cat) + '">' + esc(cat) + "</option>";
@@ -1851,7 +1866,7 @@
     if (menuKind) {
       menuKind.addEventListener("change", function () {
         var catEl = $("#menu-category");
-        if (catEl) catEl.value = menuKind.value === "masak" ? "Masak Kos" : "Jajan";
+        if (catEl) catEl.value = menuDefaultCategory(menuKind.value);
       });
     }
 
@@ -2122,6 +2137,7 @@
     bindRowActions("#expense-list");
     bindRowActions("#menu-masak-list");
     bindRowActions("#menu-jajan-list");
+    bindRowActions("#menu-diluar-list");
 
     document.addEventListener("click", function (event) {
       var goto = event.target.closest("[data-goto]");

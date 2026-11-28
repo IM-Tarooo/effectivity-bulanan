@@ -9,7 +9,7 @@ Pengatur keuangan bulanan bergaya **editorial-luxury** untuk dipakai berdua. Web
 - **Dashboard**: total budget, terpakai, sisa, aman/hari, progress bar, grafik kumulatif, donut kategori, bar harian, insight otomatis, transaksi terakhir.
 - **Budget**: set budget awal bulan dan tambahan. Sisa otomatis bertambah saat budget ditambah dan berkurang saat pengeluaran dicatat.
 - **Pengeluaran**: catat, edit, hapus, cari, filter kategori, dikelompokkan per tanggal.
-- **Menu & Jajan**: preset masakan dan jajanan (harga bisa diubah). Klik **Catat** untuk langsung mengisi form pengeluaran.
+- **Menu & Makan**: preset masakan, jajanan, dan makan di luar (harga bisa diubah). Klik **Catat** untuk langsung mengisi form pengeluaran.
 - **Shared rumah tangga**: 2 akun bisa melihat dan mengedit data yang sama lewat kode undangan.
 - **Login kode/QR**: owner bisa memakai kode 5 karakter atau QR untuk masuk dari perangkat lain tanpa email.
 - **Multi-bulan**: pilih bulan lewat kontrol bulan di header.
@@ -34,7 +34,7 @@ supabase/functions/code-login/index.ts   # Edge Function login kode/QR
 
 ## Coba dulu (tanpa setup)
 
-Buka situs, klik **Coba Mode Demo**. Data contoh bulan ini dan bulan depan otomatis dibuat, termasuk daftar masak/jajan.
+Buka situs, klik **Coba Mode Demo**. Data contoh bulan ini dan bulan depan otomatis dibuat, termasuk daftar masak, jajan, dan makan di luar.
 
 Reset data demo: **Pengaturan → Reset Data Demo**.
 
@@ -130,7 +130,7 @@ Buka `http://localhost:8000` (atau port yang ditampilkan).
 - `households` — rumah tangga + kode undangan.
 - `household_members` — anggota (user) dan nama tampilan.
 - `entries` — transaksi; `type = 'budget' | 'expense'`. Sisa = total budget − total pengeluaran.
-- `menu_items` — preset masak/jajan.
+- `menu_items` — preset masak, jajan, dan makan di luar.
 - `household_access` — kode 5 karakter + token QR milik owner. Hanya bisa dibaca lewat RPC owner.
 - `access_login_attempts` — catatan percobaan login untuk rate limit Edge Function.
 

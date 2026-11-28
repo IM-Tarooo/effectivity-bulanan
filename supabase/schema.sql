@@ -45,11 +45,31 @@ create table if not exists public.menu_items (
   household_id   uuid not null references public.households(id) on delete cascade,
   name           text not null,
   category       text not null default 'Masak Kos',
-  kind           text not null default 'masak' check (kind in ('masak', 'jajan')),
+  kind           text not null default 'masak' check (kind in ('masak', 'jajan', 'diluar')),
   default_amount numeric(14, 2) not null default 0,
   sort_order     integer not null default 0,
   created_at     timestamptz not null default now()
 );
+
+-- Pastikan database lama ikut menerima jenis menu baru.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.menu_items'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) like '%kind%'
+  loop
+    execute format('alter table public.menu_items drop constraint %I', r.conname);
+  end loop;
+
+  alter table public.menu_items
+    add constraint menu_items_kind_check
+    check (kind in ('masak', 'jajan', 'diluar'));
+end $$;
 
 -- Kode akses login tanpa email. Hanya owner yang boleh membaca/mengubah
 -- lewat RPC; Edge Function memakai service role untuk memvalidasi kode.
@@ -179,11 +199,43 @@ begin
     (v_id, 'Otak Otak Full Chili Oil',        'Jajan',     'jajan', 12000, 4),
     (v_id, 'Pentol Full Kuah (10k berdua)',   'Jajan',     'jajan', 10000, 5),
     (v_id, 'Gorengan 1k (8-10k berdua)',      'Jajan',     'jajan', 9000,  6),
-    (v_id, 'Chuba Buat Kondimen',             'Jajan',     'jajan', 5000,  7);
+    (v_id, 'Chuba Buat Kondimen',             'Jajan',     'jajan', 5000,  7),
+    (v_id, 'Nasi Ayam Geprek',                'Makan di Luar', 'diluar', 15000, 1),
+    (v_id, 'Nasi Padang',                     'Makan di Luar', 'diluar', 20000, 2),
+    (v_id, 'Mie Ayam',                        'Makan di Luar', 'diluar', 12000, 3),
+    (v_id, 'Bakso',                           'Makan di Luar', 'diluar', 15000, 4),
+    (v_id, 'Sate Ayam',                       'Makan di Luar', 'diluar', 20000, 5),
+    (v_id, 'Nasi Goreng',                     'Makan di Luar', 'diluar', 15000, 6),
+    (v_id, 'Ayam Bakar',                      'Makan di Luar', 'diluar', 18000, 7),
+    (v_id, 'Makan Berdua',                    'Makan di Luar', 'diluar', 35000, 8);
 
   return v_id;
 end;
 $$;
+
+-- Rumah tangga lama juga mendapat preset Makan di Luar.
+do $$
+declare
+  h record;
+begin
+  for h in select id from public.households loop
+    if not exists (
+      select 1 from public.menu_items
+      where household_id = h.id and kind = 'diluar'
+    ) then
+      insert into public.menu_items (household_id, name, category, kind, default_amount, sort_order)
+      values
+        (h.id, 'Nasi Ayam Geprek', 'Makan di Luar', 'diluar', 15000, 1),
+        (h.id, 'Nasi Padang',      'Makan di Luar', 'diluar', 20000, 2),
+        (h.id, 'Mie Ayam',         'Makan di Luar', 'diluar', 12000, 3),
+        (h.id, 'Bakso',            'Makan di Luar', 'diluar', 15000, 4),
+        (h.id, 'Sate Ayam',        'Makan di Luar', 'diluar', 20000, 5),
+        (h.id, 'Nasi Goreng',      'Makan di Luar', 'diluar', 15000, 6),
+        (h.id, 'Ayam Bakar',       'Makan di Luar', 'diluar', 18000, 7),
+        (h.id, 'Makan Berdua',     'Makan di Luar', 'diluar', 35000, 8);
+    end if;
+  end loop;
+end $$;
 
 -- ------------------------------------------------------------
 -- RPC: gabung rumah tangga lewat kode undangan

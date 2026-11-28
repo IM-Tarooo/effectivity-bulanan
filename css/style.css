@@ -1714,7 +1714,7 @@ select {
 
 .menu-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1729,12 +1729,17 @@ select {
 
 .menu-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 11px 13px;
   border: 1px solid var(--line);
   border-radius: 2px;
   background: var(--paper-2);
+}
+
+.menu-row .row-actions {
+  margin-left: auto;
 }
 
 .menu-info {
@@ -1745,11 +1750,10 @@ select {
 }
 
 .menu-name {
-  overflow: hidden;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
 }
 
 .menu-meta {
@@ -2031,6 +2035,10 @@ select {
 
   .span-2 {
     grid-column: span 2;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .welcome-grid {

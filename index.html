@@ -55,7 +55,7 @@
             <li>Ringkasan budget dan arus pengeluaran</li>
             <li>Sisa budget dihitung otomatis</li>
             <li>Satu rumah tangga untuk dua akun</li>
-            <li>Preset masak dan jajan sekali klik</li>
+            <li>Preset masak, jajan, dan makan di luar sekali klik</li>
             <li>Tampilan tenang, fokus pada angka</li>
           </ul>
         </div>
@@ -279,7 +279,7 @@
             <span class="nav-ico">
               <svg viewBox="0 0 24 24"><path d="M4 11h16a8 8 0 0 1-16 0Z" /><path d="M8 7c0-2 2-2 2-4M12 7c0-2 2-2 2-4M16 7c0-2 2-2 2-4" /></svg>
             </span>
-            Menu &amp; Jajan
+            Menu &amp; Makan
           </button>
           <button class="nav-btn" data-tab="settings" type="button">
             <span class="nav-ico">
@@ -510,14 +510,14 @@
           <section id="tab-menu" class="tab-panel" hidden>
             <div class="page-head">
               <div>
-                <p class="eyebrow">Menu &amp; Jajan</p>
+                <p class="eyebrow">Menu &amp; Makan</p>
                 <h1>Preset Cepat</h1>
               </div>
               <button id="menu-add-btn" class="btn primary small" type="button">+ Tambah Menu</button>
             </div>
             <p class="page-desc">
-              Daftar masakan dan jajanan favorit. Klik "Catat" untuk langsung mengisi form
-              pengeluaran.
+              Daftar masakan, jajanan, dan makan di luar favorit. Klik "Catat" untuk langsung mengisi
+              form pengeluaran.
             </p>
 
             <div class="menu-grid">
@@ -537,6 +537,15 @@
                 </div>
                 <ul id="menu-jajan-list" class="menu-list"></ul>
                 <p id="menu-jajan-empty" class="empty-state" hidden>Belum ada menu jajan.</p>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h2>Makan di Luar</h2>
+                  <span id="menu-diluar-count" class="panel-tag">0 item</span>
+                </div>
+                <ul id="menu-diluar-list" class="menu-list"></ul>
+                <p id="menu-diluar-empty" class="empty-state" hidden>Belum ada menu makan di luar.</p>
               </div>
             </div>
           </section>
@@ -718,6 +727,7 @@
             <select id="menu-kind">
               <option value="masak">Masak Kos</option>
               <option value="jajan">Jajan Makan Pokok</option>
+              <option value="diluar">Makan di Luar</option>
             </select>
           </label>
           <label>

@@ -12,7 +12,7 @@
   var EFB = global.EFB;
   var CFG = global.APP_CONFIG || {};
 
-  var CATEGORIES = ["Makan Pokok", "Jajan", "Masak Kos", "Transport", "Kebutuhan", "Lainnya"];
+  var CATEGORIES = ["Makan Pokok", "Jajan", "Masak Kos", "Makan di Luar", "Transport", "Kebutuhan", "Lainnya"];
   var BUDGET_CATEGORY = "Budget";
 
   function mapEntry(row) {
@@ -480,7 +480,15 @@
       ["Otak Otak Full Chili Oil", "Jajan", "jajan", 12000, 4],
       ["Pentol Full Kuah (10k berdua)", "Jajan", "jajan", 10000, 5],
       ["Gorengan 1k (8-10k berdua)", "Jajan", "jajan", 9000, 6],
-      ["Chuba Buat Kondimen", "Jajan", "jajan", 5000, 7]
+      ["Chuba Buat Kondimen", "Jajan", "jajan", 5000, 7],
+      ["Nasi Ayam Geprek", "Makan di Luar", "diluar", 15000, 1],
+      ["Nasi Padang", "Makan di Luar", "diluar", 20000, 2],
+      ["Mie Ayam", "Makan di Luar", "diluar", 12000, 3],
+      ["Bakso", "Makan di Luar", "diluar", 15000, 4],
+      ["Sate Ayam", "Makan di Luar", "diluar", 20000, 5],
+      ["Nasi Goreng", "Makan di Luar", "diluar", 15000, 6],
+      ["Ayam Bakar", "Makan di Luar", "diluar", 18000, 7],
+      ["Makan Berdua", "Makan di Luar", "diluar", 35000, 8]
     ];
 
     return raw.map(function (item) {
@@ -783,8 +791,10 @@
 
       listMenu: function () {
         var list = readDemo().menu.slice();
+        var order = { masak: 0, jajan: 1, diluar: 2 };
         list.sort(function (a, b) {
-          if (a.kind !== b.kind) return a.kind === "masak" ? -1 : 1;
+          var kindDiff = (order[a.kind] || 0) - (order[b.kind] || 0);
+          if (kindDiff) return kindDiff;
           return (a.sortOrder || 0) - (b.sortOrder || 0) || a.name.localeCompare(b.name);
         });
         return Promise.resolve(list);
