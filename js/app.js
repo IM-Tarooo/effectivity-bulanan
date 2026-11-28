@@ -2262,15 +2262,6 @@
       });
     }
 
-    $$("[data-menu-toggle]").forEach(function (toggle) {
-      toggle.addEventListener("click", function () {
-        var group = toggle.closest(".menu-group");
-        if (!group) return;
-        var isOpen = group.classList.toggle("is-open");
-        toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      });
-    });
-
     var menuKind = $("#menu-kind");
     if (menuKind) {
       menuKind.addEventListener("change", function () {

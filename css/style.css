@@ -1957,33 +1957,40 @@ select {
   white-space: nowrap;
 }
 
-.menu-accordion {
+.menu-grid {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.menu-group {
-  overflow: clip;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+.menu-panel {
+  padding: 0;
 }
 
 .menu-toggle {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  display: flex;
   align-items: center;
+  gap: 10px;
   width: 100%;
-  gap: 12px;
-  padding: 16px 18px;
+  padding: 18px 22px;
   border: 0;
   background: transparent;
   color: var(--ink);
+  cursor: pointer;
   text-align: left;
+  list-style: none;
 }
 
 .menu-toggle:hover {
   background: var(--paper-2);
+}
+
+.menu-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.menu-toggle::marker {
+  content: "";
 }
 
 .menu-toggle:focus-visible {
@@ -1991,35 +1998,20 @@ select {
   outline-offset: -3px;
 }
 
-.menu-toggle-icon {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
-  color: var(--accent);
-  font-size: 15px;
-}
-
-.menu-toggle-copy {
-  display: grid;
-  min-width: 0;
-  gap: 1px;
-}
-
 .menu-toggle-title {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.menu-toggle-description {
+  min-width: 0;
   overflow: hidden;
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.menu-toggle .panel-tag {
+  margin-left: auto;
 }
 
 .menu-toggle-chevron {
@@ -2028,18 +2020,12 @@ select {
   transition: transform 160ms ease;
 }
 
-.menu-group.is-open .menu-toggle-chevron {
+.menu-panel[open] .menu-toggle-chevron {
   transform: rotate(180deg);
 }
 
 .menu-group-body {
-  display: none;
-  border-top: 1px solid var(--line);
-  padding: 12px;
-}
-
-.menu-group.is-open .menu-group-body {
-  display: block;
+  padding: 0 22px 22px;
 }
 
 .menu-list {
@@ -2623,6 +2609,10 @@ select {
     grid-template-columns: 1fr;
   }
 
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+
   .onboarding-grid {
     grid-template-columns: 1fr;
   }
@@ -2696,12 +2686,11 @@ select {
   }
 
   .menu-toggle {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    padding: 14px;
+    padding: 16px;
   }
 
-  .menu-toggle .panel-tag {
-    display: none;
+  .menu-group-body {
+    padding: 0 16px 16px;
   }
 
   .brand-title {
