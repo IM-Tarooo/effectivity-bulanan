@@ -7,9 +7,11 @@ Pengatur keuangan bulanan bergaya **editorial-luxury** untuk dipakai berdua. Web
 ## Fitur
 
 - **Dashboard**: total budget, terpakai, sisa, aman/hari, progress bar, grafik kumulatif, donut kategori, bar harian, insight otomatis, transaksi terakhir.
+- **Dua saku + bareng**: saku Malik (cyan), saku Irna (pink), dan total bareng (emas). Budget dan pengeluaran bisa dicatat per saku.
+- **Peringatan otomatis**: aman, waspada, atau kritis berdasarkan sisa dana, batas harian, dan ambang yang bisa diatur.
 - **Budget**: set budget awal bulan dan tambahan. Sisa otomatis bertambah saat budget ditambah dan berkurang saat pengeluaran dicatat.
-- **Pengeluaran**: catat, edit, hapus, cari, filter kategori, dikelompokkan per tanggal.
-- **Menu & Makan**: preset masakan, jajanan, dan makan di luar (harga bisa diubah). Klik **Catat** untuk langsung mengisi form pengeluaran.
+- **Pengeluaran**: catat, edit, hapus, cari, filter kategori dan saku, dikelompokkan per tanggal.
+- **Menu & Makan**: preset masakan, jajanan, makan di luar, dan kebutuhan lain (harga bisa diubah). Klik **Catat** untuk langsung mengisi form pengeluaran.
 - **Shared rumah tangga**: 2 akun bisa melihat dan mengedit data yang sama lewat kode undangan.
 - **Login kode/QR**: owner bisa memakai kode 5 karakter atau QR untuk masuk dari perangkat lain tanpa email.
 - **Multi-bulan**: pilih bulan lewat kontrol bulan di header.
@@ -34,22 +36,22 @@ supabase/functions/code-login/index.ts   # Edge Function login kode/QR
 
 ## Coba dulu (tanpa setup)
 
-Buka situs, klik **Coba Mode Demo**. Data contoh bulan ini dan bulan depan otomatis dibuat, termasuk daftar masak, jajan, dan makan di luar.
+Buka situs, klik **Coba Mode Demo**. Data contoh bulan ini dan bulan depan otomatis dibuat, termasuk daftar masak, jajan, makan di luar, dan kebutuhan lain.
 
-Reset data demo: **Pengaturan → Reset Data Demo**.
+Reset data demo: **Pengaturan -> Reset Data Demo**.
 
 ## Setup Supabase (gratis)
 
 1. Buat project di [supabase.com](https://supabase.com).
 2. Buka **SQL Editor**, salin seluruh isi `supabase/schema.sql`, lalu **Run**.
-   - Jika project sudah pernah memakai schema lama, jalankan ulang file yang sama. Bagian akses kode bersifat idempotent dan akan membuat kode untuk rumah tangga yang sudah ada.
+   - Jika project sudah pernah memakai schema lama, jalankan ulang file yang sama. Schema bersifat idempotent: kolom saku/peringatan, backfill `entries.pocket`, dan preset kebutuhan akan dibuat untuk rumah tangga lama.
 3. Deploy Edge Function login kode/QR:
    ```bash
    npx supabase login
    npx supabase functions deploy code-login --remote=<project-ref> --use-api --no-verify-jwt --yes
    ```
    Ganti `<project-ref>` dengan ID project Supabase (mis. `cntuzjthzvmwuoulqjkt`). Function ini otomatis memakai `SUPABASE_URL` dan `SUPABASE_SERVICE_ROLE_KEY`; jangan menaruh service role di frontend.
-4. Buka **Project Settings → API**, salin:
+4. Buka **Project Settings -> API**, salin:
    - `Project URL`
    - `anon public` key
 5. Isi dua nilai itu di `js/config.js`:
@@ -59,27 +61,43 @@ Reset data demo: **Pengaturan → Reset Data Demo**.
    SUPABASE_ANON_KEY: "eyJhbGciOi...",
    ```
 
-   Alternatif: buka situs → **Panduan Setup** → tempel URL + anon key. Nilai disimpan di `localStorage` browser (tanpa mengubah file).
+   Alternatif: buka situs -> **Panduan Setup** -> tempel URL + anon key. Nilai disimpan di `localStorage` browser (tanpa mengubah file).
 
-6. **Authentication → Providers → Email**:
+6. **Authentication -> Providers -> Email**:
    - Untuk masa testing, matikan **Confirm email** agar langsung bisa login setelah daftar.
    - Setelah akun kamu dan pasangan dibuat, matikan **Allow new users to sign up** supaya tidak ada akun random.
-7. **Authentication → URL Configuration**:
+7. **Authentication -> URL Configuration**:
    - `Site URL`: URL GitHub Pages kamu, mis. `https://im-tarooo.github.io/effectivity-bulanan/`
    - Tambahkan URL itu juga di `Redirect URLs`.
 
 > Jangan pernah memakai `service_role` key di frontend. Yang dipakai hanya `anon public`.
 
+## Saku dan peringatan
+
+- **Saku Malik** (owner, cyan) dan **Saku Irna** (pasangan, pink) menghitung sisa masing-masing: budget saku dikurangi pengeluaran saku itu.
+- **Total Bareng** (emas) menghitung gabungan semua saku: total budget dikurangi semua pengeluaran.
+- Budget baru default ke saku sesuai akun yang login. Pengeluaran baru default ke **Bareng**.
+- Setiap transaksi bisa dipindah saku lewat form tambah/edit.
+- **Pengaturan -> Saku & Peringatan** mengatur:
+  - `Batas aman per hari` (default Rp100.000)
+  - `Ambang waspada` (default Rp1.000.000)
+  - `Ambang kritis` (default Rp500.000)
+- Status peringatan:
+  - **Aman**: sisa dana di atas ambang waspada.
+  - **Waspada**: sisa dana di bawah/ambang waspada, dengan batas harian yang disarankan.
+  - **Kritis**: sisa dana di bawah ambang kritis atau sudah minus.
+- Warna saku mengikuti anggota: owner cyan, pasangan pink, pengeluaran bareng emas.
+
 ## Alur 2 user
 
-1. User pertama daftar → **Buat Rumah Tangga**.
+1. User pertama daftar -> **Buat Rumah Tangga**.
 2. Buka **Pengaturan**, salin **Kode undangan**.
-3. User kedua daftar → **Gabung** dengan kode tersebut.
+3. User kedua daftar -> **Gabung** dengan kode tersebut.
 4. Keduanya sekarang melihat budget dan pengeluaran yang sama.
 
 ## Login kode/QR
 
-1. Owner buka **Pengaturan → Akses Kode**.
+1. Owner buka **Pengaturan -> Akses Kode**.
 2. Salin **kode 5 karakter** atau tunjukkan **QR** ke perangkat lain.
 3. Di perangkat baru, scan QR (langsung masuk) atau buka tab **Kode** lalu masukkan kodenya.
 4. Kode/QR bisa diedit atau diacak kapan saja. Mengganti kode akan membuat QR lama tidak berlaku.
@@ -99,7 +117,7 @@ git remote add origin https://github.com/IM-Tarooo/effectivity-bulanan.git
 git push -u origin main
 ```
 
-Lalu di GitHub: **Settings → Pages → Build and deployment → Deploy from a branch → main / (root)**.
+Lalu di GitHub: **Settings -> Pages -> Build and deployment -> Deploy from a branch -> main / (root)**.
 
 Situs akan tersedia di:
 
@@ -127,12 +145,12 @@ Buka `http://localhost:8000` (atau port yang ditampilkan).
 
 ## Model data
 
-- `households` — rumah tangga + kode undangan.
-- `household_members` — anggota (user) dan nama tampilan.
-- `entries` — transaksi; `type = 'budget' | 'expense'`. Sisa = total budget − total pengeluaran.
-- `menu_items` — preset masak, jajan, dan makan di luar.
-- `household_access` — kode 5 karakter + token QR milik owner. Hanya bisa dibaca lewat RPC owner.
-- `access_login_attempts` — catatan percobaan login untuk rate limit Edge Function.
+- `households` - rumah tangga, kode undangan, dan pengaturan `daily_cap`, `warn_threshold`, `critical_threshold`.
+- `household_members` - anggota (user) dan nama tampilan.
+- `entries` - transaksi; `type = 'budget' | 'expense'`, `pocket = 'owner' | 'partner' | 'shared'`. Sisa = total budget - total pengeluaran.
+- `menu_items` - preset `masak`, `jajan`, `diluar`, dan `kebutuhan`.
+- `household_access` - kode 5 karakter + token QR milik owner. Hanya bisa dibaca lewat RPC owner.
+- `access_login_attempts` - catatan percobaan login untuk rate limit Edge Function.
 
 Semua tabel memakai RLS: user hanya bisa mengakses data rumah tangga tempat dia menjadi anggota.
 
@@ -143,9 +161,11 @@ Semua tabel memakai RLS: user hanya bisa mengakses data rumah tangga tempat dia 
 | Tidak bisa daftar / login | Cek URL + anon key. Pastikan schema.sql sudah dijalankan. |
 | "Email not confirmed" | Matikan Confirm email di Supabase, atau konfirmasi lewat inbox. |
 | "Login kode belum aktif" | Edge Function `code-login` belum di-deploy. Jalankan langkah deploy di atas. |
-| "Kode akses tidak valid" | Pastikan 5 karakter benar. Setelah 8–20 percobaan gagal, tunggu 10 menit. |
+| "Kode akses tidak valid" | Pastikan 5 karakter benar. Setelah 8-20 percobaan gagal, tunggu 10 menit. |
 | QR tidak muncul | Pastikan CDN `qrcodejs` tidak diblokir, lalu refresh. |
-| Kode akses hilang setelah update | Jalankan ulang `schema.sql`; backfill akan membuat kode untuk rumah tangga lama. Buka **Pengaturan → Akses Kode**. |
+| Kode akses hilang setelah update | Jalankan ulang `schema.sql`; backfill akan membuat kode untuk rumah tangga lama. Buka **Pengaturan -> Akses Kode**. |
+| Kolom saku/peringatan tidak ada | Jalankan ulang `supabase/schema.sql` terbaru. |
+| Menu kebutuhan kosong | Jalankan ulang `schema.sql`; preset kebutuhan akan di-backfill untuk rumah tangga lama. |
 | Tidak bisa daftar akun baru | Signup memang dimatikan. Nyalakan sementara **Allow new users to sign up**, buat akun, lalu matikan lagi. |
 | Data tidak muncul | Pastikan user sudah tergabung di rumah tangga. Cek RLS aktif. |
 | Grafik kosong | Pastikan Chart.js CDN tidak diblokir. Coba refresh. |

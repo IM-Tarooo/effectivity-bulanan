@@ -19,6 +19,14 @@ create table if not exists public.households (
   created_at  timestamptz not null default now()
 );
 
+-- Batas harian dan ambang peringatan dana. Bisa diubah dari Pengaturan.
+alter table public.households
+  add column if not exists daily_cap numeric(14, 2) not null default 100000;
+alter table public.households
+  add column if not exists warn_threshold numeric(14, 2) not null default 1000000;
+alter table public.households
+  add column if not exists critical_threshold numeric(14, 2) not null default 500000;
+
 create table if not exists public.household_members (
   household_id uuid not null references public.households(id) on delete cascade,
   user_id      uuid not null references auth.users(id) on delete cascade,
@@ -39,6 +47,36 @@ create table if not exists public.entries (
   amount       numeric(14, 2) not null check (amount > 0),
   created_at   timestamptz not null default now()
 );
+
+-- Saku transaksi: owner (cyan), partner (pink), shared/bareng (emas).
+alter table public.entries add column if not exists pocket text;
+
+do $$
+begin
+  update public.entries e
+  set pocket = case when m.role = 'owner' then 'owner' else 'partner' end
+  from public.household_members m
+  where e.pocket is null
+    and m.household_id = e.household_id
+    and m.user_id = e.created_by;
+end $$;
+
+update public.entries set pocket = 'shared' where pocket is null;
+alter table public.entries alter column pocket set default 'shared';
+alter table public.entries alter column pocket set not null;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.entries'::regclass
+      and conname = 'entries_pocket_check'
+  ) then
+    alter table public.entries
+      add constraint entries_pocket_check
+      check (pocket in ('owner', 'partner', 'shared'));
+  end if;
+end $$;
 
 create table if not exists public.menu_items (
   id             uuid primary key default gen_random_uuid(),
@@ -68,7 +106,7 @@ begin
 
   alter table public.menu_items
     add constraint menu_items_kind_check
-    check (kind in ('masak', 'jajan', 'diluar'));
+    check (kind in ('masak', 'jajan', 'diluar', 'kebutuhan'));
 end $$;
 
 -- Kode akses login tanpa email. Hanya owner yang boleh membaca/mengubah
@@ -92,6 +130,8 @@ create table if not exists public.access_login_attempts (
 
 create index if not exists entries_household_date_idx
   on public.entries (household_id, entry_date desc);
+create index if not exists entries_household_pocket_date_idx
+  on public.entries (household_id, pocket, entry_date desc);
 create index if not exists menu_items_household_idx
   on public.menu_items (household_id, kind, sort_order);
 create index if not exists household_members_user_idx
@@ -207,7 +247,15 @@ begin
     (v_id, 'Sate Ayam',                       'Makan di Luar', 'diluar', 20000, 5),
     (v_id, 'Nasi Goreng',                     'Makan di Luar', 'diluar', 15000, 6),
     (v_id, 'Ayam Bakar',                      'Makan di Luar', 'diluar', 18000, 7),
-    (v_id, 'Makan Berdua',                    'Makan di Luar', 'diluar', 35000, 8);
+    (v_id, 'Makan Berdua',                    'Makan di Luar', 'diluar', 35000, 8),
+    (v_id, 'Isi Bensin',                      'Kebutuhan', 'kebutuhan', 20000, 1),
+    (v_id, 'Laundry',                         'Kebutuhan', 'kebutuhan', 15000, 2),
+    (v_id, 'Perlengkapan Mandi',              'Kebutuhan', 'kebutuhan', 25000, 3),
+    (v_id, 'Sabun Cuci',                      'Kebutuhan', 'kebutuhan', 15000, 4),
+    (v_id, 'Gas LPG',                         'Kebutuhan', 'kebutuhan', 25000, 5),
+    (v_id, 'Air Galon',                       'Kebutuhan', 'kebutuhan', 20000, 6),
+    (v_id, 'Pulsa / Data',                    'Kebutuhan', 'kebutuhan', 50000, 7),
+    (v_id, 'Obat',                            'Kebutuhan', 'kebutuhan', 20000, 8);
 
   return v_id;
 end;
@@ -233,6 +281,30 @@ begin
         (h.id, 'Nasi Goreng',      'Makan di Luar', 'diluar', 15000, 6),
         (h.id, 'Ayam Bakar',       'Makan di Luar', 'diluar', 18000, 7),
         (h.id, 'Makan Berdua',     'Makan di Luar', 'diluar', 35000, 8);
+    end if;
+  end loop;
+end $$;
+
+-- Rumah tangga lama juga mendapat preset Kebutuhan Lain.
+do $$
+declare
+  h record;
+begin
+  for h in select id from public.households loop
+    if not exists (
+      select 1 from public.menu_items
+      where household_id = h.id and kind = 'kebutuhan'
+    ) then
+      insert into public.menu_items (household_id, name, category, kind, default_amount, sort_order)
+      values
+        (h.id, 'Isi Bensin',         'Kebutuhan', 'kebutuhan', 20000, 1),
+        (h.id, 'Laundry',            'Kebutuhan', 'kebutuhan', 15000, 2),
+        (h.id, 'Perlengkapan Mandi', 'Kebutuhan', 'kebutuhan', 25000, 3),
+        (h.id, 'Sabun Cuci',         'Kebutuhan', 'kebutuhan', 15000, 4),
+        (h.id, 'Gas LPG',            'Kebutuhan', 'kebutuhan', 25000, 5),
+        (h.id, 'Air Galon',          'Kebutuhan', 'kebutuhan', 20000, 6),
+        (h.id, 'Pulsa / Data',       'Kebutuhan', 'kebutuhan', 50000, 7),
+        (h.id, 'Obat',               'Kebutuhan', 'kebutuhan', 20000, 8);
     end if;
   end loop;
 end $$;

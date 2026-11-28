@@ -326,6 +326,14 @@
               </article>
             </div>
 
+            <div id="dash-warning" class="warning-panel is-neutral">
+              <span class="warning-kicker">Status Dana</span>
+              <strong id="dash-warning-title">Tambahkan budget untuk melihat status dana.</strong>
+              <p id="dash-warning-copy">Peringatan otomatis muncul saat dana mulai tipis.</p>
+            </div>
+
+            <div id="dash-pockets" class="pocket-grid"></div>
+
             <div class="panel progress-panel">
               <div class="progress-head">
                 <span>Pemakaian budget</span>
@@ -409,6 +417,14 @@
               </article>
             </div>
 
+            <div id="budget-warning" class="warning-panel is-neutral">
+              <span class="warning-kicker">Status Dana</span>
+              <strong id="budget-warning-title">Tambahkan budget untuk melihat status dana.</strong>
+              <p id="budget-warning-copy">Peringatan otomatis muncul saat dana mulai tipis.</p>
+            </div>
+
+            <div id="budget-pockets" class="pocket-grid"></div>
+
             <div class="panel">
               <div class="panel-head">
                 <h2>Tambah / Atur Budget</h2>
@@ -418,10 +434,14 @@
                 <button class="chip" type="button" data-budget-preset="awal">Budget awal bulan</button>
                 <button class="chip" type="button" data-budget-preset="tambahan">Tambahan budget</button>
               </div>
-              <form id="budget-form" class="form-grid inline-form">
+              <form id="budget-form" class="form-grid inline-form wide">
                 <label>
                   Tanggal
                   <input id="budget-date" type="date" required />
+                </label>
+                <label>
+                  Saku
+                  <select id="budget-pocket"></select>
                 </label>
                 <label>
                   Keterangan
@@ -434,8 +454,7 @@
                 <button class="btn primary" type="submit">Tambah Budget</button>
               </form>
               <p class="hint" style="margin-top: 10px">
-                Setiap budget yang ditambahkan otomatis menambah sisa. Setiap pengeluaran otomatis
-                mengurangi sisa.
+                Pilih saku Malik, Irna, atau Bareng. Total gabungan otomatis dijumlahkan.
               </p>
             </div>
 
@@ -464,15 +483,21 @@
               </div>
             </div>
 
+            <div id="expense-pocket-summary" class="pocket-summary"></div>
+
             <div class="panel">
               <div class="panel-head">
                 <h2>Catat Pengeluaran</h2>
                 <span class="panel-tag">Otomatis −</span>
               </div>
-              <form id="expense-form" class="form-grid inline-form">
+              <form id="expense-form" class="form-grid inline-form wide">
                 <label>
                   Tanggal
                   <input id="expense-date" type="date" required />
+                </label>
+                <label>
+                  Saku
+                  <select id="expense-pocket"></select>
                 </label>
                 <label>
                   Deskripsi
@@ -498,6 +523,7 @@
               <div class="filter-row">
                 <input id="expense-search" type="search" placeholder="Cari deskripsi atau kategori..." />
                 <select id="expense-filter-category"></select>
+                <select id="expense-filter-pocket"></select>
               </div>
               <div id="expense-list" class="date-groups"></div>
               <p id="expense-empty" class="empty-state" hidden>
@@ -516,8 +542,8 @@
               <button id="menu-add-btn" class="btn primary small" type="button">+ Tambah Menu</button>
             </div>
             <p class="page-desc">
-              Daftar masakan, jajanan, dan makan di luar favorit. Klik "Catat" untuk langsung mengisi
-              form pengeluaran.
+              Daftar masakan, jajanan, makan di luar, dan kebutuhan lain. Klik "Catat" untuk langsung
+              mengisi form pengeluaran.
             </p>
 
             <div class="menu-grid">
@@ -546,6 +572,17 @@
                 </div>
                 <ul id="menu-diluar-list" class="menu-list"></ul>
                 <p id="menu-diluar-empty" class="empty-state" hidden>Belum ada menu makan di luar.</p>
+              </div>
+
+              <div class="panel">
+                <div class="panel-head">
+                  <h2>Kebutuhan Lain</h2>
+                  <span id="menu-kebutuhan-count" class="panel-tag">0 item</span>
+                </div>
+                <ul id="menu-kebutuhan-list" class="menu-list"></ul>
+                <p id="menu-kebutuhan-empty" class="empty-state" hidden>
+                  Belum ada kebutuhan lain. Tambahkan bensin, laundry, perlengkapan mandi, dan lainnya.
+                </p>
               </div>
             </div>
           </section>
@@ -591,6 +628,33 @@
                 </div>
                 <p class="hint" style="margin-top: 10px">
                   Bagikan kode ini ke pasangan setelah dia daftar akun.
+                </p>
+              </div>
+
+              <div class="panel settings-wide">
+                <div class="panel-head">
+                  <h2>Saku &amp; Peringatan</h2>
+                  <span class="panel-tag">2 saku + bareng</span>
+                </div>
+                <div id="settings-pocket-legend" class="pocket-legend"></div>
+                <form id="settings-warning-form" class="form-grid settings-warning-form">
+                  <label>
+                    Batas harian (Rp)
+                    <input id="settings-daily-cap" type="number" min="1000" step="1000" placeholder="100000" />
+                  </label>
+                  <label>
+                    Ambang waspada (Rp)
+                    <input id="settings-warn-threshold" type="number" min="0" step="1000" placeholder="1000000" />
+                  </label>
+                  <label>
+                    Ambang kritis (Rp)
+                    <input id="settings-critical-threshold" type="number" min="0" step="1000" placeholder="500000" />
+                  </label>
+                  <button class="btn ghost" type="submit">Simpan Pengaturan</button>
+                </form>
+                <p class="hint" style="margin-top: 10px">
+                  Warna saku mengikuti anggota: owner cyan, pasangan pink, pengeluaran bareng emas.
+                  Ambang waspada dan kritis dipakai untuk peringatan di dashboard.
                 </p>
               </div>
 
@@ -697,6 +761,10 @@
             <select id="entry-category"></select>
           </label>
           <label>
+            Saku
+            <select id="entry-pocket"></select>
+          </label>
+          <label>
             Jumlah (Rp)
             <input id="entry-amount" type="number" min="1" step="1" placeholder="20000" required />
           </label>
@@ -728,6 +796,7 @@
               <option value="masak">Masak Kos</option>
               <option value="jajan">Jajan Makan Pokok</option>
               <option value="diluar">Makan di Luar</option>
+              <option value="kebutuhan">Kebutuhan Lain</option>
             </select>
           </label>
           <label>

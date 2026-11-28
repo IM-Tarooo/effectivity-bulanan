@@ -25,6 +25,7 @@
       category: row.category,
       description: row.description,
       amount: Number(row.amount),
+      pocket: row.pocket || "shared",
       createdAt: row.created_at
     };
   }
@@ -58,6 +59,9 @@
       id: row.id,
       name: row.name,
       inviteCode: row.invite_code,
+      dailyCap: Number(row.daily_cap) || 100000,
+      warnThreshold: Number(row.warn_threshold) || 1000000,
+      criticalThreshold: Number(row.critical_threshold) || 500000,
       createdAt: row.created_at
     };
   }
@@ -199,7 +203,7 @@
 
         var houseRes = await client
           .from("households")
-          .select("id, name, invite_code, created_at")
+          .select("id, name, invite_code, daily_cap, warn_threshold, critical_threshold, created_at")
           .eq("id", memberRes.data.household_id)
           .maybeSingle();
 
@@ -262,7 +266,23 @@
           .from("households")
           .update({ name: name })
           .eq("id", store.householdId)
-          .select("id, name, invite_code, created_at")
+          .select("id, name, invite_code, daily_cap, warn_threshold, critical_threshold, created_at")
+          .single();
+        if (res.error) throw res.error;
+        return mapHousehold(res.data);
+      },
+
+      updateHouseholdSettings: async function (settings) {
+        var update = {};
+        if (settings.dailyCap != null) update.daily_cap = Number(settings.dailyCap);
+        if (settings.warnThreshold != null) update.warn_threshold = Number(settings.warnThreshold);
+        if (settings.criticalThreshold != null) update.critical_threshold = Number(settings.criticalThreshold);
+
+        var res = await client
+          .from("households")
+          .update(update)
+          .eq("id", store.householdId)
+          .select("id, name, invite_code, daily_cap, warn_threshold, critical_threshold, created_at")
           .single();
         if (res.error) throw res.error;
         return mapHousehold(res.data);
@@ -314,7 +334,8 @@
             type: payload.type,
             category: payload.category,
             description: payload.description,
-            amount: Number(payload.amount)
+            amount: Number(payload.amount),
+            pocket: payload.pocket || "shared"
           })
           .select("*")
           .single();
@@ -329,6 +350,7 @@
         if (patch.category != null) update.category = patch.category;
         if (patch.description != null) update.description = patch.description;
         if (patch.amount != null) update.amount = Number(patch.amount);
+        if (patch.pocket != null) update.pocket = patch.pocket;
 
         var res = await client.from("entries").update(update).eq("id", id).select("*").single();
         if (res.error) throw res.error;
@@ -392,7 +414,7 @@
           client.from("entries").select("*").eq("household_id", store.householdId).order("entry_date", { ascending: true }),
           client.from("menu_items").select("*").eq("household_id", store.householdId),
           client.from("household_members").select("household_id, user_id, display_name, role, joined_at").eq("household_id", store.householdId),
-          client.from("households").select("id, name, invite_code, created_at").eq("id", store.householdId).maybeSingle()
+          client.from("households").select("id, name, invite_code, daily_cap, warn_threshold, critical_threshold, created_at").eq("id", store.householdId).maybeSingle()
         ]);
 
         for (var i = 0; i < results.length; i++) {
@@ -460,7 +482,7 @@
   var DEMO_USER = {
     id: "demo-user",
     email: "demo@lokal",
-    user_metadata: { display_name: "Taro (Demo)" }
+    user_metadata: { display_name: "Malik" }
   };
 
   function demoMenuSeed() {
@@ -488,7 +510,15 @@
       ["Sate Ayam", "Makan di Luar", "diluar", 20000, 5],
       ["Nasi Goreng", "Makan di Luar", "diluar", 15000, 6],
       ["Ayam Bakar", "Makan di Luar", "diluar", 18000, 7],
-      ["Makan Berdua", "Makan di Luar", "diluar", 35000, 8]
+      ["Makan Berdua", "Makan di Luar", "diluar", 35000, 8],
+      ["Isi Bensin", "Kebutuhan", "kebutuhan", 20000, 1],
+      ["Laundry", "Kebutuhan", "kebutuhan", 15000, 2],
+      ["Perlengkapan Mandi", "Kebutuhan", "kebutuhan", 25000, 3],
+      ["Sabun Cuci", "Kebutuhan", "kebutuhan", 15000, 4],
+      ["Gas LPG", "Kebutuhan", "kebutuhan", 25000, 5],
+      ["Air Galon", "Kebutuhan", "kebutuhan", 20000, 6],
+      ["Pulsa / Data", "Kebutuhan", "kebutuhan", 50000, 7],
+      ["Obat", "Kebutuhan", "kebutuhan", 20000, 8]
     ];
 
     return raw.map(function (item) {
@@ -511,7 +541,7 @@
     var next = EFB.plusMonth(current, 1);
     var entries = [];
 
-    function add(month, day, type, category, description, amount) {
+    function add(month, day, type, category, description, amount, pocket) {
       var range = EFB.monthRange(month);
       if (day > range.days) return;
       entries.push({
@@ -523,41 +553,48 @@
         category: category,
         description: description,
         amount: Number(amount),
+        pocket: pocket || "shared",
         createdAt: new Date().toISOString()
       });
     }
 
-    add(current, 1, "budget", BUDGET_CATEGORY, "Budget awal " + EFB.monthLabel(current), 1000000);
-    add(next, 1, "budget", BUDGET_CATEGORY, "Budget awal " + EFB.monthLabel(next), 1000000);
+    add(current, 1, "budget", BUDGET_CATEGORY, "Budget Malik " + EFB.monthLabel(current), 1500000, "owner");
+    add(current, 1, "budget", BUDGET_CATEGORY, "Budget Irna " + EFB.monthLabel(current), 1500000, "partner");
+    add(next, 1, "budget", BUDGET_CATEGORY, "Budget Malik " + EFB.monthLabel(next), 1500000, "owner");
+    add(next, 1, "budget", BUDGET_CATEGORY, "Budget Irna " + EFB.monthLabel(next), 1500000, "partner");
 
-    add(current, 27, "expense", "Jajan", "Jotoast", 20000);
-    add(current, 28, "expense", "Masak Kos", "Masak telur + nasi", 6000);
-    add(current, 28, "expense", "Makan Pokok", "Tahukck nasi", 14000);
-    add(current, 29, "expense", "Makan Pokok", "Lamongan", 18000);
-    add(current, 29, "expense", "Jajan", "Jotoast", 20000);
-    add(current, 30, "expense", "Jajan", "Pok Pok Jamur", 13000);
-    add(current, 30, "expense", "Jajan", "Otak Otak Nasi", 14000);
-    add(next, 1, "expense", "Jajan", "Pok Pok Usus", 14000);
+    add(current, 27, "expense", "Jajan", "Jotoast", 20000, "shared");
+    add(current, 28, "expense", "Masak Kos", "Masak telur + nasi", 6000, "shared");
+    add(current, 28, "expense", "Makan Pokok", "Tahukck nasi", 14000, "owner");
+    add(current, 28, "expense", "Kebutuhan", "Isi Bensin", 20000, "owner");
+    add(current, 29, "expense", "Makan Pokok", "Lamongan", 18000, "partner");
+    add(current, 29, "expense", "Jajan", "Jotoast", 20000, "shared");
+    add(current, 30, "expense", "Jajan", "Pok Pok Jamur", 13000, "shared");
+    add(current, 30, "expense", "Jajan", "Otak Otak Nasi", 14000, "partner");
+    add(next, 1, "expense", "Jajan", "Pok Pok Usus", 14000, "shared");
 
     return {
       household: {
         id: DEMO_HOUSEHOLD_ID,
         name: "Rumah Tangga Demo",
         inviteCode: "DEMO01",
+        dailyCap: 100000,
+        warnThreshold: 1000000,
+        criticalThreshold: 500000,
         createdAt: new Date().toISOString()
       },
       members: [
         {
           householdId: DEMO_HOUSEHOLD_ID,
           userId: DEMO_USER.id,
-          displayName: "Taro (Demo)",
+          displayName: "Malik",
           role: "owner",
           joinedAt: new Date().toISOString()
         },
         {
           householdId: DEMO_HOUSEHOLD_ID,
           userId: "demo-partner",
-          displayName: "Pasangan (Demo)",
+          displayName: "Irna",
           role: "member",
           joinedAt: new Date().toISOString()
         }
@@ -582,6 +619,51 @@
     return data;
   }
 
+  function ensureDemoShape(data) {
+    var changed = false;
+
+    if (data.household) {
+      if (data.household.dailyCap == null) {
+        data.household.dailyCap = 100000;
+        changed = true;
+      }
+      if (data.household.warnThreshold == null) {
+        data.household.warnThreshold = 1000000;
+        changed = true;
+      }
+      if (data.household.criticalThreshold == null) {
+        data.household.criticalThreshold = 500000;
+        changed = true;
+      }
+    }
+
+    if (!Array.isArray(data.menu)) {
+      data.menu = demoMenuSeed();
+      changed = true;
+    } else if (!data.menu.some(function (item) { return item.kind === "kebutuhan"; })) {
+      data.menu = data.menu.concat(
+        demoMenuSeed().filter(function (item) { return item.kind === "kebutuhan"; })
+      );
+      changed = true;
+    }
+
+    if (Array.isArray(data.entries)) {
+      data.entries.forEach(function (entry) {
+        if (entry.pocket) return;
+        entry.pocket =
+          entry.type === "budget"
+            ? entry.createdBy === DEMO_USER.id
+              ? "owner"
+              : "partner"
+            : "shared";
+        changed = true;
+      });
+    }
+
+    if (changed) writeDemo(data);
+    return data;
+  }
+
   function readDemo() {
     var raw = localStorage.getItem(DEMO_KEY);
     if (!raw) {
@@ -590,7 +672,7 @@
       return fresh;
     }
     try {
-      return ensureDemoAccess(JSON.parse(raw));
+      return ensureDemoShape(ensureDemoAccess(JSON.parse(raw)));
     } catch (e) {
       var fallback = demoSeed();
       localStorage.setItem(DEMO_KEY, JSON.stringify(fallback));
@@ -693,6 +775,15 @@
         return Promise.resolve(data.household);
       },
 
+      updateHouseholdSettings: function (settings) {
+        var data = readDemo();
+        if (settings.dailyCap != null) data.household.dailyCap = Number(settings.dailyCap);
+        if (settings.warnThreshold != null) data.household.warnThreshold = Number(settings.warnThreshold);
+        if (settings.criticalThreshold != null) data.household.criticalThreshold = Number(settings.criticalThreshold);
+        writeDemo(data);
+        return Promise.resolve(data.household);
+      },
+
       rotateInviteCode: function () {
         var data = readDemo();
         var code = "";
@@ -758,6 +849,7 @@
           category: payload.category,
           description: payload.description,
           amount: Number(payload.amount),
+          pocket: payload.pocket || "shared",
           createdAt: new Date().toISOString()
         };
         data.entries.push(entry);
@@ -776,6 +868,7 @@
         if (patch.category != null) entry.category = patch.category;
         if (patch.description != null) entry.description = patch.description;
         if (patch.amount != null) entry.amount = Number(patch.amount);
+        if (patch.pocket != null) entry.pocket = patch.pocket;
         writeDemo(data);
         return Promise.resolve(entry);
       },
@@ -892,6 +985,7 @@
 
   Store.CATEGORIES = CATEGORIES;
   Store.BUDGET_CATEGORY = BUDGET_CATEGORY;
+  Store.POCKET_KEYS = ["owner", "partner", "shared"];
   Store.hasBackend = hasBackend;
 
   global.Store = Store;

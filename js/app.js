@@ -17,6 +17,72 @@
     return EFB.escapeHtml(value);
   }
 
+  function pocketMember(role) {
+    return state.members.filter(function (m) { return m.role === role; })[0] || null;
+  }
+
+  function pocketMeta(key) {
+    var owner = pocketMember("owner");
+    var partner = pocketMember("member");
+    var label = POCKET_FALLBACK_LABELS[key] || key;
+    if (key === "owner" && owner && owner.displayName) label = owner.displayName;
+    if (key === "partner" && partner && partner.displayName) label = partner.displayName;
+    return {
+      key: key,
+      label: label,
+      color: POCKET_COLORS[key] || POCKET_COLORS.shared
+    };
+  }
+
+  function pocketBadge(key) {
+    var meta = pocketMeta(key || "shared");
+    return (
+      '<span class="pocket-badge" style="--pocket-color:' + meta.color + '">' +
+      '<span class="pocket-dot"></span>' + esc(meta.label) +
+      "</span>"
+    );
+  }
+
+  function fillPocketSelect(select, includeAll) {
+    if (!select) return;
+    var current = select.value;
+    var keys = includeAll ? ["all", "owner", "partner", "shared"] : ["owner", "partner", "shared"];
+    select.innerHTML = keys
+      .map(function (key) {
+        var label = key === "all" ? "Semua saku" : pocketMeta(key).label;
+        return '<option value="' + esc(key) + '">' + esc(label) + "</option>";
+      })
+      .join("");
+    if (current && keys.indexOf(current) >= 0) select.value = current;
+  }
+
+  function defaultPocketFor(type) {
+    if (type === "budget") {
+      return state.membership && state.membership.role === "member" ? "partner" : "owner";
+    }
+    return "shared";
+  }
+
+  function refreshPocketSelects() {
+    var budgetPocket = $("#budget-pocket");
+    if (budgetPocket) {
+      fillPocketSelect(budgetPocket);
+      if (!budgetPocket.value) budgetPocket.value = defaultPocketFor("budget");
+    }
+
+    var expensePocket = $("#expense-pocket");
+    if (expensePocket) {
+      fillPocketSelect(expensePocket);
+      if (!expensePocket.value) expensePocket.value = "shared";
+    }
+
+    var filterPocket = $("#expense-filter-pocket");
+    if (filterPocket) fillPocketSelect(filterPocket, true);
+
+    var entryPocket = $("#entry-pocket");
+    if (entryPocket) fillPocketSelect(entryPocket);
+  }
+
   var CATEGORY_COLORS = {
     "Makan Pokok": "#8a6a3f",
     "Jajan": "#a04a3a",
@@ -29,6 +95,17 @@
   };
 
   var PALETTE = ["#8a6a3f", "#a04a3a", "#3f6b52", "#b08a57", "#5b6b7a", "#9a9084", "#6f7d6a"];
+
+  var POCKET_COLORS = {
+    owner: "#1f8a9e",
+    partner: "#c05c7e",
+    shared: "#b08a57"
+  };
+  var POCKET_FALLBACK_LABELS = {
+    owner: "Malik",
+    partner: "Irna",
+    shared: "Bareng"
+  };
 
   var state = {
     screen: "welcome",
@@ -68,6 +145,7 @@
     if (expCat) expCat.value = "Makan Pokok";
     fillCategorySelect($("#expense-filter-category"), true);
     fillMenuCategorySelect($("#menu-category"));
+    refreshPocketSelects();
 
     var resetConfig = $("#auth-reset-config");
     if (resetConfig && localStorage.getItem("efb_config")) resetConfig.hidden = false;
@@ -290,6 +368,7 @@
       state.members = results[0] || [];
       state.menu = results[1] || [];
       state.entries = results[2] || [];
+      refreshPocketSelects();
 
       if (state.screen === "app") renderAll();
     } catch (err) {
@@ -309,6 +388,87 @@
         loadData({ silent: true });
       }, 450)
     );
+  }
+
+  function computeWarning(summary) {
+    var cap = Number(state.household && state.household.dailyCap) || 100000;
+    var warnAt = Number(state.household && state.household.warnThreshold) || 1000000;
+    var criticalAt = Number(state.household && state.household.criticalThreshold) || 500000;
+
+    if (summary.isFuture) {
+      return {
+        status: "neutral",
+        title: "Bulan belum dimulai",
+        copy: "Budget " + EFB.money(summary.totalBudget) + " siap dipakai bulan ini."
+      };
+    }
+
+    if (summary.isPast) {
+      return {
+        status: "neutral",
+        title: "Bulan sudah lewat",
+        copy: "Sisa akhir bulan " + EFB.money(summary.remaining) + "."
+      };
+    }
+
+    if (summary.totalBudget <= 0) {
+      return {
+        status: "neutral",
+        title: "Tambahkan budget untuk melihat status dana.",
+        copy: "Peringatan otomatis muncul saat dana mulai tipis."
+      };
+    }
+
+    if (summary.remaining < 0) {
+      return {
+        status: "critical",
+        title: "Dana sudah minus " + EFB.money(Math.abs(summary.remaining)),
+        copy: "Pengeluaran melebihi budget. Tambah budget atau kurangi pengeluaran."
+      };
+    }
+
+    if (summary.remaining < criticalAt) {
+      var needed = cap * summary.daysLeft;
+      var shortfall = Math.max(0, needed - summary.remaining);
+      return {
+        status: "critical",
+        title: "Dana tidak akan cukup hingga tanggal 1",
+        copy:
+          "Sisa " + EFB.money(summary.remaining) + " untuk " + summary.daysLeft + " hari. " +
+          "Dana di bawah batas kritis " + EFB.money(criticalAt) + ". " +
+          (shortfall > 0
+            ? "Butuh " + EFB.money(shortfall) + " lagi agar aman di " + EFB.money(cap) + "/hari."
+            : "Segera tahan pengeluaran.")
+      };
+    }
+
+    if (summary.remaining <= warnAt) {
+      var safeDaily = summary.daysLeft > 0 ? summary.remaining / summary.daysLeft : 0;
+      var cut = Math.max(0, cap - safeDaily);
+      return {
+        status: "warn",
+        title: "Wajib hemat: maks " + EFB.money(cap) + "/hari",
+        copy:
+          "Sisa " + EFB.money(summary.remaining) + " untuk " + summary.daysLeft + " hari = " +
+          EFB.money(safeDaily) + "/hari. " +
+          (cut > 0
+            ? "Kurangi " + EFB.money(cut) + "/hari dari batas " + EFB.money(cap) + "."
+            : "Dana sudah di bawah ambang waspada " + EFB.money(warnAt) + ".")
+      };
+    }
+
+    var coverDays = Math.max(1, Math.floor(summary.remaining / cap));
+    var todayDay = new Date().getDate();
+    var safeDay = todayDay + coverDays - 1;
+    var until = safeDay >= summary.days ? "akhir bulan" : "tanggal " + safeDay;
+
+    return {
+      status: "safe",
+      title: "Dana aman hingga " + until,
+      copy:
+        "Estimasi " + EFB.money(cap) + "/hari. Sisa " + EFB.money(summary.remaining) +
+        " untuk " + summary.daysLeft + " hari."
+    };
   }
 
   function computeSummary() {
@@ -339,7 +499,30 @@
     var pct = totalBudget > 0 ? (totalExpense / totalBudget) * 100 : totalExpense > 0 ? 100 : 0;
     var dailySafe = daysLeft > 0 ? remaining / daysLeft : 0;
 
-    return {
+    var byPocket = {};
+    ["owner", "partner", "shared"].forEach(function (key) {
+      byPocket[key] = { budget: 0, expense: 0, remaining: 0, pct: 0, budgetCount: 0, expenseCount: 0 };
+    });
+
+    budgets.forEach(function (e) {
+      var key = byPocket[e.pocket] ? e.pocket : "shared";
+      byPocket[key].budget += e.amount;
+      byPocket[key].budgetCount += 1;
+    });
+
+    expenses.forEach(function (e) {
+      var key = byPocket[e.pocket] ? e.pocket : "shared";
+      byPocket[key].expense += e.amount;
+      byPocket[key].expenseCount += 1;
+    });
+
+    Object.keys(byPocket).forEach(function (key) {
+      var pocket = byPocket[key];
+      pocket.remaining = pocket.budget - pocket.expense;
+      pocket.pct = pocket.budget > 0 ? (pocket.expense / pocket.budget) * 100 : pocket.expense > 0 ? 100 : 0;
+    });
+
+    var summary = {
       budgets: budgets,
       expenses: expenses,
       totalBudget: totalBudget,
@@ -349,10 +532,84 @@
       days: range.days,
       daysLeft: daysLeft,
       dailySafe: dailySafe,
+      byPocket: byPocket,
       isCurrent: isCurrent,
       isFuture: isFuture,
       isPast: !isCurrent && !isFuture
     };
+    summary.warning = computeWarning(summary);
+    return summary;
+  }
+
+  function renderWarning(summary) {
+    var warning = summary.warning;
+    ["#dash-warning", "#budget-warning"].forEach(function (selector) {
+      var panel = $(selector);
+      if (!panel) return;
+
+      panel.classList.remove("is-neutral", "is-safe", "is-warn", "is-critical");
+      panel.classList.add("is-" + warning.status);
+
+      var title = $("[id$='-warning-title']", panel);
+      var copy = $("[id$='-warning-copy']", panel);
+      if (title) title.textContent = warning.title;
+      if (copy) copy.textContent = warning.copy;
+    });
+  }
+
+  function renderPocketCards(summary) {
+    var html = ["owner", "partner", "shared"]
+      .map(function (key) {
+        var meta = pocketMeta(key);
+        var pocket = summary.byPocket[key];
+        var isShared = key === "shared";
+        var title = isShared ? "Total Bareng" : "Saku " + meta.label;
+        var budget = isShared ? summary.totalBudget : pocket.budget;
+        var expense = isShared ? summary.totalExpense : pocket.expense;
+        var remaining = isShared ? summary.remaining : pocket.remaining;
+        var pct = isShared ? summary.pct : pocket.pct;
+        var count = isShared ? summary.expenses.length : pocket.expenseCount;
+        var sub =
+          "Budget " + EFB.money(budget) + " · terpakai " + EFB.money(expense);
+        return (
+          '<article class="pocket-card" style="--pocket-color:' + meta.color + '">' +
+          '<div class="pocket-card-head"><span class="pocket-dot"></span><span>' + esc(title) + "</span></div>" +
+          "<strong>" + EFB.money(remaining) + "</strong>" +
+          '<span class="pocket-card-sub">' + sub + "</span>" +
+          '<div class="pocket-card-meta"><span>' + Math.round(pct) + "% terpakai</span><span>" +
+          count + " transaksi</span></div>" +
+          "</article>"
+        );
+      })
+      .join("");
+
+    ["#dash-pockets", "#budget-pockets"].forEach(function (selector) {
+      var target = $(selector);
+      if (target) target.innerHTML = html;
+    });
+  }
+
+  function renderExpensePocketSummary(summary) {
+    var target = $("#expense-pocket-summary");
+    if (!target) return;
+
+    target.innerHTML = ["owner", "partner", "shared"]
+      .map(function (key) {
+        var meta = pocketMeta(key);
+        var pocket = summary.byPocket[key];
+        var isShared = key === "shared";
+        var expense = isShared ? summary.totalExpense : pocket.expense;
+        var remaining = isShared ? summary.remaining : pocket.remaining;
+        return (
+          '<div class="pocket-summary-item" style="--pocket-color:' + meta.color + '">' +
+          '<span class="pocket-summary-name"><span class="pocket-dot"></span>' +
+          esc(isShared ? "Total" : meta.label) + "</span>" +
+          '<strong>' + EFB.money(remaining) + "</strong>" +
+          '<span class="pocket-summary-sub">sisa · ' + EFB.money(expense) + " terpakai</span>" +
+          "</div>"
+        );
+      })
+      .join("");
   }
 
   /* ==========================================================
@@ -412,6 +669,9 @@
 
     var remainingCard = $("#stat-remaining-card");
     if (remainingCard) remainingCard.classList.toggle("is-negative", s.remaining < 0);
+
+    renderWarning(s);
+    renderPocketCards(s);
 
     var pct = s.pct;
     var fill = $("#progress-fill");
@@ -520,7 +780,8 @@
           '<span class="recent-dot ' + e.type + '"></span>' +
           '<div class="recent-main">' +
           '<span class="recent-desc">' + esc(e.description) + "</span>" +
-          '<span class="recent-meta">' + esc(EFB.dateLabel(e.date)) + " · " + esc(e.category) + "</span>" +
+          '<span class="recent-meta">' + esc(EFB.dateLabel(e.date)) + " · " + esc(e.category) +
+          " " + pocketBadge(e.pocket) + "</span>" +
           "</div>" +
           '<span class="recent-amount ' + e.type + '">' +
           (isBudget ? "+" : "−") + " " + EFB.money(e.amount) +
@@ -752,6 +1013,9 @@
     var remainingEl = $("#budget-remaining");
     if (remainingEl) remainingEl.classList.toggle("text-danger", s.remaining < 0);
 
+    renderWarning(s);
+    renderPocketCards(s);
+
     var budgets = s.budgets.slice().sort(function (a, b) {
       return (
         b.date.localeCompare(a.date) ||
@@ -768,7 +1032,7 @@
           return (
             '<li class="entry-row">' +
             '<div class="entry-main">' +
-            '<span class="entry-date">' + esc(EFB.dateLabel(e.date)) + "</span>" +
+            '<span class="entry-date">' + esc(EFB.dateLabel(e.date)) + " " + pocketBadge(e.pocket) + "</span>" +
             '<span class="entry-desc">' + esc(e.description) + "</span>" +
             "</div>" +
             '<span class="entry-amount plus">+ ' + EFB.money(e.amount) + "</span>" +
@@ -787,16 +1051,17 @@
   }
 
   function renderExpenses() {
-    var all = state.entries.filter(function (e) {
-      return e.type === "expense";
-    });
+    var s = computeSummary();
+    var all = s.expenses;
 
     setText("#expense-month-title", EFB.monthLabel(state.month));
-    setText("#expense-total", EFB.money(EFB.sum(all, function (e) { return e.amount; })));
+    setText("#expense-total", EFB.money(s.totalExpense));
     setText("#expense-count", all.length + " transaksi");
+    renderExpensePocketSummary(s);
 
     var query = ($("#expense-search") && $("#expense-search").value.trim().toLowerCase()) || "";
     var category = ($("#expense-filter-category") && $("#expense-filter-category").value) || "all";
+    var pocket = ($("#expense-filter-pocket") && $("#expense-filter-pocket").value) || "all";
 
     var filtered = all.filter(function (e) {
       var matchQuery =
@@ -804,7 +1069,8 @@
         e.description.toLowerCase().indexOf(query) >= 0 ||
         e.category.toLowerCase().indexOf(query) >= 0;
       var matchCategory = category === "all" || e.category === category;
-      return matchQuery && matchCategory;
+      var matchPocket = pocket === "all" || (e.pocket || "shared") === pocket;
+      return matchQuery && matchCategory && matchPocket;
     });
 
     filtered.sort(function (a, b) {
@@ -838,6 +1104,7 @@
               return (
                 '<div class="expense-row">' +
                 '<span class="expense-cat" style="--cat-color:' + color + '">' + esc(e.category) + "</span>" +
+                pocketBadge(e.pocket) +
                 '<div class="expense-main">' +
                 '<span class="expense-desc">' + esc(e.description) + "</span>" +
                 '<span class="expense-meta">' + esc(EFB.dateLabel(e.date)) + "</span>" +
@@ -878,14 +1145,17 @@
     var masak = state.menu.filter(function (m) { return m.kind === "masak"; });
     var jajan = state.menu.filter(function (m) { return m.kind === "jajan"; });
     var diluar = state.menu.filter(function (m) { return m.kind === "diluar"; });
+    var kebutuhan = state.menu.filter(function (m) { return m.kind === "kebutuhan"; });
 
     masak.sort(menuSorter);
     jajan.sort(menuSorter);
     diluar.sort(menuSorter);
+    kebutuhan.sort(menuSorter);
 
     setText("#menu-masak-count", masak.length + " item");
     setText("#menu-jajan-count", jajan.length + " item");
     setText("#menu-diluar-count", diluar.length + " item");
+    setText("#menu-kebutuhan-count", kebutuhan.length + " item");
 
     var masakList = $("#menu-masak-list");
     if (masakList) masakList.innerHTML = masak.map(menuRow).join("");
@@ -896,12 +1166,17 @@
     var diluarList = $("#menu-diluar-list");
     if (diluarList) diluarList.innerHTML = diluar.map(menuRow).join("");
 
+    var kebutuhanList = $("#menu-kebutuhan-list");
+    if (kebutuhanList) kebutuhanList.innerHTML = kebutuhan.map(menuRow).join("");
+
     var masakEmpty = $("#menu-masak-empty");
     if (masakEmpty) masakEmpty.hidden = masak.length > 0;
     var jajanEmpty = $("#menu-jajan-empty");
     if (jajanEmpty) jajanEmpty.hidden = jajan.length > 0;
     var diluarEmpty = $("#menu-diluar-empty");
     if (diluarEmpty) diluarEmpty.hidden = diluar.length > 0;
+    var kebutuhanEmpty = $("#menu-kebutuhan-empty");
+    if (kebutuhanEmpty) kebutuhanEmpty.hidden = kebutuhan.length > 0;
   }
 
   function menuSorter(a, b) {
@@ -911,6 +1186,7 @@
   function menuDefaultCategory(kind) {
     if (kind === "jajan") return "Jajan";
     if (kind === "diluar") return "Makan di Luar";
+    if (kind === "kebutuhan") return "Kebutuhan";
     return "Masak Kos";
   }
 
@@ -949,6 +1225,34 @@
     }
 
     setText("#settings-invite-code", (state.household && state.household.inviteCode) || "—");
+
+    var dailyCap = $("#settings-daily-cap");
+    if (dailyCap && document.activeElement !== dailyCap) {
+      dailyCap.value = (state.household && state.household.dailyCap) || 100000;
+    }
+    var warnThreshold = $("#settings-warn-threshold");
+    if (warnThreshold && document.activeElement !== warnThreshold) {
+      warnThreshold.value = (state.household && state.household.warnThreshold) || 1000000;
+    }
+    var criticalThreshold = $("#settings-critical-threshold");
+    if (criticalThreshold && document.activeElement !== criticalThreshold) {
+      criticalThreshold.value = (state.household && state.household.criticalThreshold) || 500000;
+    }
+
+    var legend = $("#settings-pocket-legend");
+    if (legend) {
+      legend.innerHTML = ["owner", "partner", "shared"]
+        .map(function (key) {
+          var meta = pocketMeta(key);
+          return (
+            '<span class="pocket-legend-item" style="--pocket-color:' + meta.color + '">' +
+            '<span class="pocket-dot"></span>' +
+            esc(key === "shared" ? "Bareng" : meta.label) +
+            "</span>"
+          );
+        })
+        .join("");
+    }
 
     var isOwner = state.membership && state.membership.role === "owner";
     var accessPanel = $("#access-panel");
@@ -1159,6 +1463,11 @@
       }
       catEl.value = desired;
     }
+    var pocketEl = $("#entry-pocket");
+    if (pocketEl) {
+      fillPocketSelect(pocketEl);
+      pocketEl.value = (entry && entry.pocket) || defaultPocketFor(type);
+    }
     var amountEl = $("#entry-amount");
     if (amountEl) {
       amountEl.value = (entry && entry.amount) || (preset && preset.defaultAmount) || "";
@@ -1230,6 +1539,7 @@
     var date = ($("#entry-date") && $("#entry-date").value) || "";
     var description = ($("#entry-description") && $("#entry-description").value.trim()) || "";
     var category = ($("#entry-category") && $("#entry-category").value) || "Lainnya";
+    var pocket = ($("#entry-pocket") && $("#entry-pocket").value) || defaultPocketFor(type);
     var amount = Number(($("#entry-amount") && $("#entry-amount").value) || 0);
 
     if (!date || !description || !(amount > 0)) {
@@ -1242,7 +1552,8 @@
       type: type,
       category: category,
       description: description,
-      amount: amount
+      amount: amount,
+      pocket: pocket
     };
 
     var submitBtn = $("#entry-submit");
@@ -1348,6 +1659,7 @@
     var date = ($("#expense-date") && $("#expense-date").value) || "";
     var description = ($("#expense-description") && $("#expense-description").value.trim()) || "";
     var category = ($("#expense-category") && $("#expense-category").value) || "Lainnya";
+    var pocket = ($("#expense-pocket") && $("#expense-pocket").value) || "shared";
     var amount = Number(($("#expense-amount") && $("#expense-amount").value) || 0);
 
     if (!date || !description || !(amount > 0)) {
@@ -1364,7 +1676,8 @@
         type: "expense",
         category: category,
         description: description,
-        amount: amount
+        amount: amount,
+        pocket: pocket
       });
 
       var descEl = $("#expense-description");
@@ -1390,6 +1703,7 @@
 
     var date = ($("#budget-date") && $("#budget-date").value) || "";
     var description = ($("#budget-description") && $("#budget-description").value.trim()) || "";
+    var pocket = ($("#budget-pocket") && $("#budget-pocket").value) || defaultPocketFor("budget");
     var amount = Number(($("#budget-amount") && $("#budget-amount").value) || 0);
 
     if (!date || !description || !(amount > 0)) {
@@ -1406,7 +1720,8 @@
         type: "budget",
         category: Store.BUDGET_CATEGORY,
         description: description,
-        amount: amount
+        amount: amount,
+        pocket: pocket
       });
 
       var amountEl = $("#budget-amount");
@@ -1643,7 +1958,7 @@
 
   function fillMenuCategorySelect(select) {
     if (!select) return;
-    var categories = ["Masak Kos", "Jajan", "Makan di Luar", "Makan Pokok", "Kebutuhan", "Lainnya"];
+    var categories = ["Masak Kos", "Jajan", "Makan di Luar", "Kebutuhan", "Makan Pokok", "Lainnya"];
     select.innerHTML = categories
       .map(function (cat) {
         return '<option value="' + esc(cat) + '">' + esc(cat) + "</option>";
@@ -1698,6 +2013,7 @@
       [/Invalid API key|apikey/i, "Anon key Supabase tidak valid. Cek konfigurasi."],
       [/Invalid URL|Failed to construct/i, "URL Supabase tidak valid. Cek konfigurasi."],
       [/JWT|token/i, "Sesi login bermasalah. Coba masuk ulang."],
+      [/column .* does not exist|Could not find the '.*' column|schema cache/i, "Database belum diperbarui. Jalankan ulang supabase/schema.sql di Supabase SQL Editor."],
       [/duplicate key|unique constraint/i, "Data sudah ada. Coba lagi."]
     ];
 
@@ -1855,6 +2171,9 @@
     var filterCategory = $("#expense-filter-category");
     if (filterCategory) filterCategory.addEventListener("change", renderExpenses);
 
+    var filterPocket = $("#expense-filter-pocket");
+    if (filterPocket) filterPocket.addEventListener("change", renderExpenses);
+
     var menuAdd = $("#menu-add-btn");
     if (menuAdd) {
       menuAdd.addEventListener("click", function () {
@@ -1964,6 +2283,44 @@
           toast("Nama rumah tangga diperbarui.", "success");
         } catch (err) {
           toast(friendlyError(err), "error");
+        }
+      });
+    }
+
+    var settingsWarningForm = $("#settings-warning-form");
+    if (settingsWarningForm) {
+      settingsWarningForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        var dailyCap = Number(($("#settings-daily-cap") && $("#settings-daily-cap").value) || 0);
+        var warnThreshold = Number(($("#settings-warn-threshold") && $("#settings-warn-threshold").value) || 0);
+        var criticalThreshold = Number(($("#settings-critical-threshold") && $("#settings-critical-threshold").value) || 0);
+
+        if (!(dailyCap > 0)) {
+          toast("Batas harian harus lebih dari 0.", "error");
+          return;
+        }
+        if (!(warnThreshold > criticalThreshold)) {
+          toast("Ambang waspada harus lebih besar dari ambang kritis.", "error");
+          return;
+        }
+
+        var submitBtn = event.target.querySelector('button[type="submit"]');
+        setBusy(submitBtn, true);
+
+        try {
+          var updated = await Store.updateHouseholdSettings({
+            dailyCap: dailyCap,
+            warnThreshold: warnThreshold,
+            criticalThreshold: criticalThreshold
+          });
+          state.household = updated;
+          renderAll();
+          toast("Pengaturan saku dan peringatan disimpan.", "success");
+        } catch (err) {
+          toast(friendlyError(err), "error");
+        } finally {
+          setBusy(submitBtn, false);
         }
       });
     }
@@ -2138,6 +2495,7 @@
     bindRowActions("#menu-masak-list");
     bindRowActions("#menu-jajan-list");
     bindRowActions("#menu-diluar-list");
+    bindRowActions("#menu-kebutuhan-list");
 
     document.addEventListener("click", function (event) {
       var goto = event.target.closest("[data-goto]");
