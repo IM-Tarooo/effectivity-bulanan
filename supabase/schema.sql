@@ -5,6 +5,11 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
+-- EXTENSION
+-- ------------------------------------------------------------
+create extension if not exists pgcrypto with schema extensions;
+
+-- ------------------------------------------------------------
 -- TABEL
 -- ------------------------------------------------------------
 create table if not exists public.households (
@@ -46,12 +51,35 @@ create table if not exists public.menu_items (
   created_at     timestamptz not null default now()
 );
 
+-- Kode akses login tanpa email. Hanya owner yang boleh membaca/mengubah
+-- lewat RPC; Edge Function memakai service role untuk memvalidasi kode.
+create table if not exists public.household_access (
+  household_id  uuid primary key references public.households(id) on delete cascade,
+  code          text not null unique,
+  token         text not null unique,
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  updated_at    timestamptz not null default now()
+);
+
+-- Catatan percobaan login kode/QR untuk rate limit di Edge Function.
+create table if not exists public.access_login_attempts (
+  id           bigserial primary key,
+  identifier   text not null,
+  ip           text not null default '',
+  success      boolean not null default false,
+  attempted_at timestamptz not null default now()
+);
+
 create index if not exists entries_household_date_idx
   on public.entries (household_id, entry_date desc);
 create index if not exists menu_items_household_idx
   on public.menu_items (household_id, kind, sort_order);
 create index if not exists household_members_user_idx
   on public.household_members (user_id);
+create index if not exists access_attempts_ip_idx
+  on public.access_login_attempts (ip, attempted_at desc);
+create index if not exists access_attempts_identifier_idx
+  on public.access_login_attempts (identifier, attempted_at desc);
 
 -- ------------------------------------------------------------
 -- HELPER: cek keanggotaan (security definer agar tidak rekursi RLS)
@@ -68,6 +96,22 @@ as $$
     from public.household_members m
     where m.household_id = p_household
       and m.user_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_household_owner(p_household uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.household_members m
+    where m.household_id = p_household
+      and m.user_id = auth.uid()
+      and m.role = 'owner'
   );
 $$;
 
@@ -111,6 +155,12 @@ begin
 
   insert into public.household_members (household_id, user_id, display_name, role)
   values (v_id, auth.uid(), v_display, 'owner');
+
+  begin
+    perform public.set_access_code(null);
+  exception when others then
+    raise warning 'Gagal membuat kode akses otomatis: %', sqlerrm;
+  end;
 
   insert into public.menu_items (household_id, name, category, kind, default_amount, sort_order)
   values
@@ -207,6 +257,10 @@ begin
     return;
   end if;
 
+  delete from public.household_access
+  where household_id = v_hid
+    and owner_user_id = auth.uid();
+
   delete from public.household_members
   where user_id = auth.uid();
 
@@ -265,12 +319,127 @@ end;
 $$;
 
 -- ------------------------------------------------------------
+-- RPC: kode akses login tanpa email (khusus owner)
+-- ------------------------------------------------------------
+create or replace function public.set_access_code(p_code text default null)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_hid   uuid;
+  v_code  text;
+  v_token text;
+  v_bytes bytea;
+  v_chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  i       integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Kamu harus login dulu.';
+  end if;
+
+  select household_id into v_hid
+  from public.household_members
+  where user_id = auth.uid()
+    and role = 'owner'
+  limit 1;
+
+  if v_hid is null then
+    raise exception 'Hanya owner yang bisa mengatur kode akses.';
+  end if;
+
+  if p_code is null or trim(p_code) = '' then
+    loop
+      v_code := '';
+      v_bytes := extensions.gen_random_bytes(5);
+      for i in 0..4 loop
+        v_code := v_code || substr(v_chars, (get_byte(v_bytes, i) % length(v_chars)) + 1, 1);
+      end loop;
+      exit when not exists (select 1 from public.household_access where code = v_code);
+    end loop;
+  else
+    v_code := upper(trim(p_code));
+    if v_code !~ '^[A-Z0-9]{5}$' then
+      raise exception 'Kode harus 5 karakter huruf/angka.';
+    end if;
+    if exists (
+      select 1 from public.household_access
+      where code = v_code and household_id <> v_hid
+    ) then
+      raise exception 'Kode sudah dipakai rumah tangga lain.';
+    end if;
+  end if;
+
+  loop
+    v_token := encode(extensions.gen_random_bytes(32), 'hex');
+    exit when not exists (select 1 from public.household_access where token = v_token);
+  end loop;
+
+  insert into public.household_access (household_id, code, token, owner_user_id, updated_at)
+  values (v_hid, v_code, v_token, auth.uid(), now())
+  on conflict (household_id) do update
+    set code = excluded.code,
+        token = excluded.token,
+        owner_user_id = excluded.owner_user_id,
+        updated_at = now();
+
+  return jsonb_build_object('code', v_code, 'token', v_token);
+end;
+$$;
+
+create or replace function public.get_access_settings()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_hid uuid;
+  v_row public.household_access;
+begin
+  if auth.uid() is null then
+    return null;
+  end if;
+
+  select household_id into v_hid
+  from public.household_members
+  where user_id = auth.uid()
+    and role = 'owner'
+  limit 1;
+
+  if v_hid is null then
+    return null;
+  end if;
+
+  select * into v_row
+  from public.household_access
+  where household_id = v_hid;
+
+  if v_row.household_id is null then
+    return null;
+  end if;
+
+  return jsonb_build_object('code', v_row.code, 'token', v_row.token);
+end;
+$$;
+
+-- ------------------------------------------------------------
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------
 alter table public.households        enable row level security;
 alter table public.household_members enable row level security;
 alter table public.entries           enable row level security;
 alter table public.menu_items        enable row level security;
+alter table public.household_access  enable row level security;
+alter table public.access_login_attempts enable row level security;
+
+revoke all on public.household_access from anon, authenticated;
+revoke all on public.access_login_attempts from anon, authenticated;
+
+grant select, insert, update, delete on public.household_access to service_role;
+grant select, insert, update, delete on public.access_login_attempts to service_role;
+grant usage, select on sequence public.access_login_attempts_id_seq to service_role;
 
 -- households
 drop policy if exists "households_select_member" on public.households;
@@ -358,8 +527,53 @@ grant select, insert, update, delete on public.menu_items to authenticated;
 grant select, update on public.households to authenticated;
 grant select on public.household_members to authenticated;
 grant execute on function public.is_household_member(uuid) to authenticated;
+grant execute on function public.is_household_owner(uuid) to authenticated;
 grant execute on function public.create_household(text, text) to authenticated;
 grant execute on function public.join_household(text, text) to authenticated;
 grant execute on function public.leave_household() to authenticated;
 grant execute on function public.update_display_name(text) to authenticated;
 grant execute on function public.rotate_invite_code() to authenticated;
+grant execute on function public.set_access_code(text) to authenticated;
+grant execute on function public.get_access_settings() to authenticated;
+
+-- ------------------------------------------------------------
+-- BACKFILL: buat kode akses untuk rumah tangga yang sudah ada
+-- ------------------------------------------------------------
+do $$
+declare
+  r       record;
+  v_code  text;
+  v_token text;
+  v_bytes bytea;
+  v_chars text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  i       integer;
+begin
+  for r in
+    select distinct on (h.id) h.id, m.user_id as owner_id
+    from public.households h
+    join public.household_members m
+      on m.household_id = h.id
+     and m.role = 'owner'
+    where not exists (
+      select 1 from public.household_access a where a.household_id = h.id
+    )
+    order by h.id, m.joined_at
+  loop
+    loop
+      v_code := '';
+      v_bytes := extensions.gen_random_bytes(5);
+      for i in 0..4 loop
+        v_code := v_code || substr(v_chars, (get_byte(v_bytes, i) % length(v_chars)) + 1, 1);
+      end loop;
+      exit when not exists (select 1 from public.household_access where code = v_code);
+    end loop;
+
+    loop
+      v_token := encode(extensions.gen_random_bytes(32), 'hex');
+      exit when not exists (select 1 from public.household_access where token = v_token);
+    end loop;
+
+    insert into public.household_access (household_id, code, token, owner_user_id, updated_at)
+    values (r.id, v_code, v_token, r.owner_id, now());
+  end loop;
+end $$;

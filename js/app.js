@@ -44,7 +44,11 @@
     authTab: "login",
     demo: false,
     subscription: null,
-    entering: false
+    entering: false,
+    access: null,
+    accessLoading: false,
+    accessLoaded: false,
+    accessQrToken: null
   };
 
   document.addEventListener("DOMContentLoaded", init);
@@ -67,6 +71,8 @@
     var resetConfig = $("#auth-reset-config");
     if (resetConfig && localStorage.getItem("efb_config")) resetConfig.hidden = false;
 
+    var pendingAccess = takeAccessFromUrl();
+
     if (!Store.hasBackend) {
       showScreen("welcome");
       return;
@@ -75,6 +81,19 @@
     try {
       var session = await Store.init();
       Store.onAuthChange(handleAuthChange);
+
+      if (pendingAccess) {
+        showScreen("auth");
+        if (pendingAccess.code) {
+          setAuthTab("code");
+          var codeInput = $("#auth-code");
+          if (codeInput) codeInput.value = pendingAccess.code;
+        } else {
+          await loginWithAccess(pendingAccess, true);
+        }
+        return;
+      }
+
       if (session && session.user) {
         await enterApp();
       } else {
@@ -84,6 +103,71 @@
       console.error(err);
       showScreen("auth");
       showFormError("#auth-error", friendlyError(err));
+    }
+  }
+
+  function normalizeAccessCode(value) {
+    return String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 5);
+  }
+
+  function takeAccessFromUrl() {
+    var params;
+    try {
+      params = new URLSearchParams(window.location.search);
+    } catch (e) {
+      return null;
+    }
+
+    var token = params.get("access");
+    var code = params.get("code");
+    if (!token && !code) return null;
+
+    params.delete("access");
+    params.delete("code");
+    var query = params.toString();
+    var cleanUrl =
+      window.location.pathname + (query ? "?" + query : "") + window.location.hash;
+    window.history.replaceState(null, "", cleanUrl);
+
+    if (token) return { token: token.trim() };
+
+    var normalized = normalizeAccessCode(code);
+    return normalized.length === 5 ? { code: normalized } : null;
+  }
+
+  async function loginWithAccess(access, fromQr) {
+    showScreen("auth");
+    setAuthTab("code");
+
+    var submitBtn = $("#auth-submit");
+    setBusy(submitBtn, true);
+    showFormError("#auth-error", "");
+
+    if (fromQr) {
+      setText("#auth-title", "Membuka akses...");
+      setText("#auth-subtitle", "Memvalidasi QR rumah tangga.");
+    }
+
+    try {
+      if (access.token) {
+        await Store.signInWithAccessToken(access.token);
+      } else {
+        await Store.signInWithAccessCode(access.code);
+      }
+      await enterApp();
+    } catch (err) {
+      setAuthTab("code");
+      if (access.code) {
+        var input = $("#auth-code");
+        if (input) input.value = access.code;
+      }
+      showFormError("#auth-error", (err && err.message) || "Kode akses tidak valid.");
+    } finally {
+      setBusy(submitBtn, false);
     }
   }
 
@@ -119,6 +203,9 @@
       state.membership = ctx.membership;
       state.household = ctx.household;
       state.demo = Store.mode === "demo";
+      state.access = null;
+      state.accessLoaded = false;
+      state.accessQrToken = null;
 
       if (!ctx.membership) {
         showScreen("onboarding");
@@ -170,6 +257,10 @@
     state.menu = [];
     state.editing = null;
     state.demo = false;
+    state.access = null;
+    state.accessLoading = false;
+    state.accessLoaded = false;
+    state.accessQrToken = null;
   }
 
   function showScreen(name) {
@@ -844,6 +935,15 @@
 
     setText("#settings-invite-code", (state.household && state.household.inviteCode) || "—");
 
+    var isOwner = state.membership && state.membership.role === "owner";
+    var accessPanel = $("#access-panel");
+    if (accessPanel) accessPanel.hidden = !isOwner;
+
+    if (isOwner) {
+      if (!state.accessLoaded && !state.accessLoading) loadAccessSettings();
+      renderAccessSettings();
+    }
+
     var memberList = $("#settings-members");
     if (memberList) {
       memberList.innerHTML = state.members
@@ -869,6 +969,80 @@
 
     var leaveBtn = $("#settings-leave");
     if (leaveBtn) leaveBtn.hidden = state.demo;
+  }
+
+  async function loadAccessSettings() {
+    if (state.accessLoading) return;
+    if (!state.membership || state.membership.role !== "owner") return;
+
+    state.accessLoading = true;
+    try {
+      state.access = (await Store.getAccessSettings()) || null;
+      state.accessLoaded = true;
+      if (state.screen === "app" && state.tab === "settings") renderSettings();
+    } catch (err) {
+      state.accessLoaded = true;
+      console.error(err);
+    } finally {
+      state.accessLoading = false;
+    }
+  }
+
+  function renderAccessSettings() {
+    var code = state.access && state.access.code;
+    setText("#settings-access-code", code || "-----");
+
+    var input = $("#settings-access-input");
+    if (input && document.activeElement !== input) input.value = code || "";
+
+    var demoNote = $("#demo-access-note");
+    if (demoNote) demoNote.hidden = !state.demo;
+
+    renderAccessQr();
+  }
+
+  function accessLink(token) {
+    return (
+      window.location.origin +
+      window.location.pathname +
+      "?access=" +
+      encodeURIComponent(token)
+    );
+  }
+
+  function renderAccessQr() {
+    var box = $("#access-qr");
+    if (!box) return;
+
+    var token = state.access && state.access.token;
+    if (!token) {
+      box.innerHTML = '<span class="access-qr-empty">Belum ada QR</span>';
+      state.accessQrToken = null;
+      return;
+    }
+
+    if (state.accessQrToken === token && box.querySelector("canvas, img")) return;
+
+    if (!window.QRCode) {
+      box.innerHTML = '<span class="access-qr-empty">QR tidak tersedia</span>';
+      return;
+    }
+
+    box.innerHTML = "";
+    try {
+      new window.QRCode(box, {
+        text: accessLink(token),
+        width: 168,
+        height: 168,
+        colorDark: "#1f2e27",
+        colorLight: "#fffdf8",
+        correctLevel: window.QRCode.CorrectLevel.M
+      });
+      state.accessQrToken = token;
+    } catch (err) {
+      box.innerHTML = '<span class="access-qr-empty">QR tidak tersedia</span>';
+      state.accessQrToken = null;
+    }
   }
 
   /* ==========================================================
@@ -1236,6 +1410,28 @@
   async function submitAuthForm(event) {
     event.preventDefault();
 
+    if (state.authTab === "code") {
+      var accessCode = normalizeAccessCode($("#auth-code") && $("#auth-code").value);
+      if (accessCode.length !== 5) {
+        showFormError("#auth-error", "Kode akses harus 5 karakter huruf/angka.");
+        return;
+      }
+
+      var codeBtn = $("#auth-submit");
+      setBusy(codeBtn, true);
+      showFormError("#auth-error", "");
+
+      try {
+        await Store.signInWithAccessCode(accessCode);
+        await enterApp();
+      } catch (err) {
+        showFormError("#auth-error", (err && err.message) || "Kode akses tidak valid.");
+      } finally {
+        setBusy(codeBtn, false);
+      }
+      return;
+    }
+
     var email = ($("#auth-email") && $("#auth-email").value.trim()) || "";
     var password = ($("#auth-password") && $("#auth-password").value) || "";
     var name = ($("#auth-name") && $("#auth-name").value.trim()) || "";
@@ -1355,26 +1551,57 @@
       btn.classList.toggle("active", btn.getAttribute("data-auth-tab") === tab);
     });
 
+    var isCode = tab === "code";
+    var isRegister = tab === "register";
+
     var nameWrap = $("#auth-name-wrap");
-    if (nameWrap) nameWrap.hidden = tab !== "register";
+    if (nameWrap) nameWrap.hidden = !isRegister;
 
-    setText("#auth-title", tab === "login" ? "Selamat datang kembali" : "Buat akun baru");
-    setText(
-      "#auth-subtitle",
-      tab === "login"
-        ? "Masuk dengan email dan password."
-        : "Daftar 2 akun untuk dipakai berdua."
-    );
+    var emailWrap = $("#auth-email-wrap");
+    if (emailWrap) emailWrap.hidden = isCode;
 
-    var submit = $("#auth-submit");
-    if (submit) submit.textContent = tab === "login" ? "Masuk" : "Daftar";
+    var passwordWrap = $("#auth-password-wrap");
+    if (passwordWrap) passwordWrap.hidden = isCode;
+
+    var codeWrap = $("#auth-code-wrap");
+    if (codeWrap) codeWrap.hidden = !isCode;
+
+    var codeHint = $("#auth-code-hint");
+    if (codeHint) codeHint.hidden = !isCode;
+
+    var email = $("#auth-email");
+    if (email) email.required = !isCode;
 
     var password = $("#auth-password");
     if (password) {
-      password.autocomplete = tab === "login" ? "current-password" : "new-password";
+      password.required = !isCode;
+      password.autocomplete = isRegister ? "new-password" : "current-password";
     }
 
+    var codeInput = $("#auth-code");
+    if (codeInput) codeInput.required = isCode;
+
+    if (isCode) {
+      setText("#auth-title", "Masuk dengan kode");
+      setText("#auth-subtitle", "Masukkan kode akses 5 karakter dari Pengaturan.");
+    } else if (isRegister) {
+      setText("#auth-title", "Buat akun baru");
+      setText("#auth-subtitle", "Daftar 2 akun untuk dipakai berdua.");
+    } else {
+      setText("#auth-title", "Selamat datang kembali");
+      setText("#auth-subtitle", "Masuk dengan email dan password.");
+    }
+
+    var submit = $("#auth-submit");
+    if (submit) submit.textContent = isRegister ? "Daftar" : "Masuk";
+
     showFormError("#auth-error", "");
+
+    if (isCode && codeInput) {
+      window.requestAnimationFrame(function () {
+        codeInput.focus();
+      });
+    }
   }
 
   function fillCategorySelect(select, includeAll) {
@@ -1518,6 +1745,13 @@
 
     var authForm = $("#auth-form");
     if (authForm) authForm.addEventListener("submit", submitAuthForm);
+
+    var authCode = $("#auth-code");
+    if (authCode) {
+      authCode.addEventListener("input", function () {
+        this.value = normalizeAccessCode(this.value);
+      });
+    }
 
     var resetConfig = $("#auth-reset-config");
     if (resetConfig) {
@@ -1746,6 +1980,94 @@
           toast("Kode undangan baru: " + code, "success");
         } catch (err) {
           toast(friendlyError(err), "error");
+        }
+      });
+    }
+
+    var accessInput = $("#settings-access-input");
+    if (accessInput) {
+      accessInput.addEventListener("input", function () {
+        this.value = normalizeAccessCode(this.value);
+      });
+    }
+
+    var accessForm = $("#settings-access-form");
+    if (accessForm) {
+      accessForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        var code = normalizeAccessCode(accessInput && accessInput.value);
+        if (code.length !== 5) {
+          toast("Kode akses harus 5 karakter huruf/angka.", "error");
+          return;
+        }
+
+        var btn = $("#settings-access-submit");
+        setBusy(btn, true);
+        try {
+          var access = await Store.setAccessCode(code);
+          state.access = access;
+          state.accessLoaded = true;
+          state.accessQrToken = null;
+          renderSettings();
+          toast("Kode akses diperbarui. QR lama tidak berlaku.", "success");
+        } catch (err) {
+          toast(friendlyError(err), "error");
+        } finally {
+          setBusy(btn, false);
+        }
+      });
+    }
+
+    var rotateAccess = $("#rotate-access-code");
+    if (rotateAccess) {
+      rotateAccess.addEventListener("click", async function () {
+        if (!window.confirm("Acak kode akses? QR lama tidak berlaku.")) return;
+
+        var btn = $("#settings-access-submit");
+        setBusy(btn, true);
+        try {
+          var access = await Store.regenerateAccessCode();
+          state.access = access;
+          state.accessLoaded = true;
+          state.accessQrToken = null;
+          renderSettings();
+          toast("Kode akses baru dibuat. QR lama tidak berlaku.", "success");
+        } catch (err) {
+          toast(friendlyError(err), "error");
+        } finally {
+          setBusy(btn, false);
+        }
+      });
+    }
+
+    var copyAccessCode = $("#copy-access-code");
+    if (copyAccessCode) {
+      copyAccessCode.addEventListener("click", async function () {
+        var code = state.access && state.access.code;
+        if (!code) return;
+
+        try {
+          await navigator.clipboard.writeText(code);
+          toast("Kode akses disalin.", "success");
+        } catch (err) {
+          window.prompt("Salin kode akses:", code);
+        }
+      });
+    }
+
+    var copyAccessLink = $("#copy-access-link");
+    if (copyAccessLink) {
+      copyAccessLink.addEventListener("click", async function () {
+        var token = state.access && state.access.token;
+        if (!token) return;
+
+        var link = accessLink(token);
+        try {
+          await navigator.clipboard.writeText(link);
+          toast("Tautan QR disalin.", "success");
+        } catch (err) {
+          window.prompt("Salin tautan QR:", link);
         }
       });
     }

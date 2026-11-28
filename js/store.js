@@ -121,6 +121,55 @@
         return { user: res.data.user, session: res.data.session };
       },
 
+      signInWithAccessCode: function (code) {
+        return store.signInWithAccess({ code: code });
+      },
+
+      signInWithAccessToken: function (token) {
+        return store.signInWithAccess({ token: token });
+      },
+
+      signInWithAccess: async function (payload) {
+        var res = await client.functions.invoke("code-login", { body: payload });
+        if (res.error) {
+          var message = "Kode akses tidak valid.";
+          var rawMessage = String((res.error && res.error.message) || "");
+          var status = res.error.context && res.error.context.status;
+
+          if (status === 404) {
+            message = "Login kode belum aktif. Coba lagi nanti.";
+          } else if (
+            (res.error && res.error.name === "FunctionsFetchError") ||
+            /failed to send|failed to fetch|network/i.test(rawMessage)
+          ) {
+            message = "Tidak bisa menghubungi server login. Coba lagi.";
+          }
+
+          try {
+            if (res.error.context && typeof res.error.context.json === "function") {
+              var errorBody = await res.error.context.json();
+              if (errorBody && errorBody.error && status !== 404) message = errorBody.error;
+            }
+          } catch (e) {
+            /* ignore response parsing errors */
+          }
+          throw new Error(message);
+        }
+
+        var data = res.data || {};
+        if (!data.ok || !data.token_hash) {
+          throw new Error(data.error || "Kode akses tidak valid.");
+        }
+
+        var verify = await client.auth.verifyOtp({
+          token_hash: data.token_hash,
+          type: "email"
+        });
+        if (verify.error) throw verify.error;
+        if (verify.data && verify.data.user) store.userId = verify.data.user.id;
+        return verify.data;
+      },
+
       signOut: async function () {
         var res = await client.auth.signOut();
         store.userId = null;
@@ -223,6 +272,22 @@
         var res = await client.rpc("rotate_invite_code");
         if (res.error) throw res.error;
         return res.data;
+      },
+
+      getAccessSettings: async function () {
+        var res = await client.rpc("get_access_settings");
+        if (res.error) throw res.error;
+        return res.data || null;
+      },
+
+      setAccessCode: async function (code) {
+        var res = await client.rpc("set_access_code", { p_code: code || null });
+        if (res.error) throw res.error;
+        return res.data;
+      },
+
+      regenerateAccessCode: function () {
+        return store.setAccessCode(null);
       },
 
       listEntries: async function (month) {
@@ -489,9 +554,24 @@
           joinedAt: new Date().toISOString()
         }
       ],
+      access: {
+        code: "DEMO1",
+        token: "demo" + "0".repeat(60)
+      },
       entries: entries,
       menu: demoMenuSeed()
     };
+  }
+
+  function ensureDemoAccess(data) {
+    if (!data.access || !data.access.code || !data.access.token) {
+      data.access = {
+        code: "DEMO1",
+        token: "demo" + "0".repeat(60)
+      };
+      writeDemo(data);
+    }
+    return data;
   }
 
   function readDemo() {
@@ -502,7 +582,7 @@
       return fresh;
     }
     try {
-      return JSON.parse(raw);
+      return ensureDemoAccess(JSON.parse(raw));
     } catch (e) {
       var fallback = demoSeed();
       localStorage.setItem(DEMO_KEY, JSON.stringify(fallback));
@@ -543,6 +623,14 @@
 
       signUp: function () {
         return Promise.reject(new Error("Mode demo tidak memakai login. Klik Coba Mode Demo."));
+      },
+
+      signInWithAccessCode: function () {
+        return Promise.reject(new Error("Mode demo tidak memakai login kode."));
+      },
+
+      signInWithAccessToken: function () {
+        return Promise.reject(new Error("Mode demo tidak memakai login kode."));
       },
 
       signOut: function () {
@@ -605,6 +693,39 @@
         data.household.inviteCode = code;
         writeDemo(data);
         return Promise.resolve(code);
+      },
+
+      getAccessSettings: function () {
+        return Promise.resolve(readDemo().access);
+      },
+
+      setAccessCode: function (code) {
+        var data = readDemo();
+        var next = code ? String(code).trim().toUpperCase().replace(/[^A-Z0-9]/g, "") : "";
+
+        if (next && next.length !== 5) {
+          return Promise.reject(new Error("Kode harus 5 karakter huruf/angka."));
+        }
+
+        if (!next) {
+          var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+          next = "";
+          for (var i = 0; i < 5; i++) next += chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        var token = "";
+        var tokenChars = "abcdef0123456789";
+        for (var j = 0; j < 64; j++) {
+          token += tokenChars[Math.floor(Math.random() * tokenChars.length)];
+        }
+
+        data.access = { code: next, token: token };
+        writeDemo(data);
+        return Promise.resolve(data.access);
+      },
+
+      regenerateAccessCode: function () {
+        return store.setAccessCode(null);
       },
 
       listEntries: function (month) {

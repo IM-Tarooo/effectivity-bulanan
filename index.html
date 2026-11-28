@@ -100,6 +100,7 @@
           <div class="auth-tabs">
             <button class="auth-tab active" data-auth-tab="login" type="button">Masuk</button>
             <button class="auth-tab" data-auth-tab="register" type="button">Daftar</button>
+            <button class="auth-tab" data-auth-tab="code" type="button">Kode</button>
           </div>
           <h2 id="auth-title">Selamat datang kembali</h2>
           <p id="auth-subtitle" class="muted">Masuk dengan email dan password.</p>
@@ -109,11 +110,11 @@
               Nama tampilan
               <input id="auth-name" type="text" maxlength="40" placeholder="Nama kamu" />
             </label>
-            <label>
+            <label id="auth-email-wrap">
               Email
               <input id="auth-email" type="email" autocomplete="email" required placeholder="nama@email.com" />
             </label>
-            <label>
+            <label id="auth-password-wrap">
               Password
               <input
                 id="auth-password"
@@ -124,6 +125,22 @@
                 placeholder="Minimal 6 karakter"
               />
             </label>
+            <label id="auth-code-wrap" hidden>
+              Kode akses
+              <input
+                id="auth-code"
+                type="text"
+                inputmode="text"
+                autocomplete="one-time-code"
+                autocapitalize="characters"
+                spellcheck="false"
+                maxlength="10"
+                placeholder="ABCDE"
+              />
+            </label>
+            <p id="auth-code-hint" class="hint" hidden>
+              Kode 5 karakter dari Pengaturan. Scan QR untuk masuk otomatis.
+            </p>
             <p id="auth-error" class="form-error" hidden></p>
             <button id="auth-submit" class="btn primary" type="submit">Masuk</button>
           </form>
@@ -553,6 +570,55 @@
                 </p>
               </div>
 
+              <div id="access-panel" class="panel access-panel" hidden>
+                <div class="panel-head">
+                  <h2>Akses Kode</h2>
+                  <span class="panel-tag">Owner</span>
+                </div>
+                <p class="muted">
+                  Masuk tanpa email lewat kode 5 karakter atau scan QR dari HP lain.
+                </p>
+                <div class="access-grid">
+                  <div class="access-code-box">
+                    <span class="invite-label">Kode akses</span>
+                    <strong id="settings-access-code">-----</strong>
+                    <div class="row-actions">
+                      <button id="copy-access-code" type="button">Salin</button>
+                      <button id="rotate-access-code" type="button">Acak</button>
+                    </div>
+                  </div>
+                  <div class="access-qr-box">
+                    <div id="access-qr" class="access-qr" aria-label="QR login"></div>
+                    <button id="copy-access-link" class="btn ghost small" type="button">
+                      Salin Tautan QR
+                    </button>
+                  </div>
+                </div>
+                <form id="settings-access-form" class="form-grid access-form">
+                  <label>
+                    Ubah kode akses
+                    <input
+                      id="settings-access-input"
+                      type="text"
+                      maxlength="10"
+                      inputmode="text"
+                      autocapitalize="characters"
+                      spellcheck="false"
+                      placeholder="ABCDE"
+                    />
+                  </label>
+                  <button id="settings-access-submit" class="btn ghost" type="submit">
+                    Simpan Kode
+                  </button>
+                </form>
+                <p class="hint">
+                  Siapa pun yang punya kode/QR bisa masuk sebagai kamu. Ganti kode kalau bocor.
+                </p>
+                <p id="demo-access-note" class="hint" hidden>
+                  Mode demo: kode dan QR ini hanya contoh, tidak bisa dipakai login.
+                </p>
+              </div>
+
               <div class="panel">
                 <div class="panel-head">
                   <h2>Anggota</h2>
@@ -661,6 +727,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/store.js"></script>
