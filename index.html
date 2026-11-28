@@ -562,44 +562,96 @@
               mengisi form pengeluaran.
             </p>
 
-            <div class="menu-grid">
-              <div class="panel">
-                <div class="panel-head">
-                  <h2>Masak Kos</h2>
+            <div class="menu-accordion" data-menu-accordion>
+              <section class="menu-group is-open">
+                <button
+                  class="menu-toggle"
+                  type="button"
+                  data-menu-toggle
+                  aria-expanded="true"
+                  aria-controls="menu-masak-body"
+                >
+                  <span class="menu-toggle-icon" aria-hidden="true">⌁</span>
+                  <span class="menu-toggle-copy">
+                    <span class="menu-toggle-title">Masak Kos</span>
+                    <span class="menu-toggle-description">Menu rumahan untuk dimasak sendiri</span>
+                  </span>
                   <span id="menu-masak-count" class="panel-tag">0 item</span>
-                </div>
+                  <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div id="menu-masak-body" class="menu-group-body">
                 <ul id="menu-masak-list" class="menu-list"></ul>
                 <p id="menu-masak-empty" class="empty-state" hidden>Belum ada menu masak.</p>
-              </div>
-
-              <div class="panel">
-                <div class="panel-head">
-                  <h2>Jajan Makan Pokok</h2>
-                  <span id="menu-jajan-count" class="panel-tag">0 item</span>
                 </div>
+              </section>
+
+              <section class="menu-group">
+                <button
+                  class="menu-toggle"
+                  type="button"
+                  data-menu-toggle
+                  aria-expanded="false"
+                  aria-controls="menu-jajan-body"
+                >
+                  <span class="menu-toggle-icon" aria-hidden="true">◌</span>
+                  <span class="menu-toggle-copy">
+                    <span class="menu-toggle-title">Jajan Makan Pokok</span>
+                    <span class="menu-toggle-description">Camilan dan tambahan makan</span>
+                  </span>
+                  <span id="menu-jajan-count" class="panel-tag">0 item</span>
+                  <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div id="menu-jajan-body" class="menu-group-body">
                 <ul id="menu-jajan-list" class="menu-list"></ul>
                 <p id="menu-jajan-empty" class="empty-state" hidden>Belum ada menu jajan.</p>
-              </div>
-
-              <div class="panel">
-                <div class="panel-head">
-                  <h2>Makan di Luar</h2>
-                  <span id="menu-diluar-count" class="panel-tag">0 item</span>
                 </div>
+              </section>
+
+              <section class="menu-group">
+                <button
+                  class="menu-toggle"
+                  type="button"
+                  data-menu-toggle
+                  aria-expanded="false"
+                  aria-controls="menu-diluar-body"
+                >
+                  <span class="menu-toggle-icon" aria-hidden="true">⌂</span>
+                  <span class="menu-toggle-copy">
+                    <span class="menu-toggle-title">Makan di Luar</span>
+                    <span class="menu-toggle-description">Pilihan makan dari luar rumah</span>
+                  </span>
+                  <span id="menu-diluar-count" class="panel-tag">0 item</span>
+                  <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div id="menu-diluar-body" class="menu-group-body">
                 <ul id="menu-diluar-list" class="menu-list"></ul>
                 <p id="menu-diluar-empty" class="empty-state" hidden>Belum ada menu makan di luar.</p>
-              </div>
-
-              <div class="panel">
-                <div class="panel-head">
-                  <h2>Kebutuhan Lain</h2>
-                  <span id="menu-kebutuhan-count" class="panel-tag">0 item</span>
                 </div>
+              </section>
+
+              <section class="menu-group">
+                <button
+                  class="menu-toggle"
+                  type="button"
+                  data-menu-toggle
+                  aria-expanded="false"
+                  aria-controls="menu-kebutuhan-body"
+                >
+                  <span class="menu-toggle-icon" aria-hidden="true">＋</span>
+                  <span class="menu-toggle-copy">
+                    <span class="menu-toggle-title">Kebutuhan Lain</span>
+                    <span class="menu-toggle-description">Bensin, laundry, perlengkapan, dan lainnya</span>
+                  </span>
+                  <span id="menu-kebutuhan-count" class="panel-tag">0 item</span>
+                  <span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div id="menu-kebutuhan-body" class="menu-group-body">
                 <ul id="menu-kebutuhan-list" class="menu-list"></ul>
                 <p id="menu-kebutuhan-empty" class="empty-state" hidden>
                   Belum ada kebutuhan lain. Tambahkan bensin, laundry, perlengkapan mandi, dan lainnya.
                 </p>
-              </div>
+                </div>
+              </section>
             </div>
           </section>
 

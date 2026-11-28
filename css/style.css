@@ -1957,10 +1957,89 @@ select {
   white-space: nowrap;
 }
 
-.menu-grid {
+.menu-accordion {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 10px;
+}
+
+.menu-group {
+  overflow: clip;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.menu-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.menu-toggle:hover {
+  background: var(--paper-2);
+}
+
+.menu-toggle:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: -3px;
+}
+
+.menu-toggle-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.menu-toggle-copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.menu-toggle-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.menu-toggle-description {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-toggle-chevron {
+  color: var(--muted);
+  font-size: 18px;
+  transition: transform 160ms ease;
+}
+
+.menu-group.is-open .menu-toggle-chevron {
+  transform: rotate(180deg);
+}
+
+.menu-group-body {
+  display: none;
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+.menu-group.is-open .menu-group-body {
+  display: block;
 }
 
 .menu-list {
@@ -2421,10 +2500,6 @@ select {
     grid-column: span 2;
   }
 
-  .menu-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .settings-warning-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2548,10 +2623,6 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .menu-grid {
-    grid-template-columns: 1fr;
-  }
-
   .onboarding-grid {
     grid-template-columns: 1fr;
   }
@@ -2622,6 +2693,15 @@ select {
 
   .head-meta {
     align-items: flex-start;
+  }
+
+  .menu-toggle {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 14px;
+  }
+
+  .menu-toggle .panel-tag {
+    display: none;
   }
 
   .brand-title {
