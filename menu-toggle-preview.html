@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview — Menu &amp; Makan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .preview-shell { max-width: 960px; margin: 0 auto; padding: 44px 24px 64px; }
+      .preview-note { margin: 0 0 24px; padding: 10px 13px; border: 1px dashed var(--line-strong); color: var(--muted); font-size: 12px; }
+      .menu-accordion { display: grid; gap: 10px; }
+      .menu-group { overflow: clip; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+      .menu-toggle { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; width: 100%; gap: 12px; padding: 16px 18px; border: 0; background: transparent; color: var(--ink); text-align: left; }
+      .menu-toggle:hover { background: var(--paper-2); }
+      .menu-toggle:focus-visible { outline: 2px solid var(--accent-2); outline-offset: -3px; }
+      .menu-toggle-icon { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--accent); font-size: 15px; }
+      .menu-toggle-copy { display: grid; gap: 1px; min-width: 0; }
+      .menu-toggle-title { font-family: var(--font-display); font-size: 18px; font-weight: 500; }
+      .menu-toggle-description { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+      .menu-toggle-chevron { color: var(--muted); font-size: 18px; transition: transform 160ms ease; }
+      .menu-group.is-open .menu-toggle-chevron { transform: rotate(180deg); }
+      .menu-group-body { display: none; border-top: 1px solid var(--line); padding: 12px; }
+      .menu-group.is-open .menu-group-body { display: block; }
+      .preview-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+      .preview-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid var(--line); background: var(--paper-2); }
+      .preview-row-name { display: block; font-size: 13px; font-weight: 600; }
+      .preview-row-category { display: block; margin-top: 1px; color: var(--muted); font-size: 10px; }
+      .preview-row-price { color: var(--accent); font-size: 11px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .preview-row .btn { padding: 6px 10px; font-size: 11px; }
+      .preview-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; color: var(--muted); font-size: 11px; }
+      @media (max-width: 620px) {
+        .preview-shell { padding: 28px 14px 44px; }
+        .menu-toggle { grid-template-columns: auto minmax(0, 1fr) auto; padding: 14px; }
+        .menu-toggle .panel-tag { display: none; }
+        .preview-row { grid-template-columns: minmax(0, 1fr) auto; }
+        .preview-row .btn { grid-column: 1 / -1; width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="preview-shell">
+      <div class="page-head">
+        <div>
+          <p class="eyebrow">Preview UI — belum terhubung ke data</p>
+          <h1>Menu &amp; Makan</h1>
+        </div>
+        <button class="btn primary small" type="button">+ Tambah Menu</button>
+      </div>
+      <p class="page-desc">Empat kelompok preset tetap terpisah, tetapi kontennya baru terlihat ketika toggle dibuka.</p>
+      <p class="preview-note">Klik tiap judul untuk membuka atau menutup grup. Contoh ini memakai data dummy dan tidak mengubah aplikasi utama.</p>
+
+      <div class="menu-accordion" data-menu-accordion>
+        <section class="menu-group is-open">
+          <button class="menu-toggle" type="button" aria-expanded="true">
+            <span class="menu-toggle-icon" aria-hidden="true">⌁</span>
+            <span class="menu-toggle-copy"><span class="menu-toggle-title">Masak Kos</span><span class="menu-toggle-description">Menu rumahan untuk dimasak sendiri</span></span>
+            <span class="panel-tag">9 item</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="menu-group-body">
+            <ul class="preview-list">
+              <li class="preview-row"><span><span class="preview-row-name">Tempe Goreng</span><span class="preview-row-category">Masak Kos</span></span><span class="preview-row-price">Rp3.000</span><button class="btn ghost" type="button">Catat</button></li>
+              <li class="preview-row"><span><span class="preview-row-name">Telur Dadar</span><span class="preview-row-category">Masak Kos</span></span><span class="preview-row-price">Rp3.000</span><button class="btn ghost" type="button">Catat</button></li>
+              <li class="preview-row"><span><span class="preview-row-name">Mie All Around</span><span class="preview-row-category">Masak Kos</span></span><span class="preview-row-price">Rp7.000</span><button class="btn ghost" type="button">Catat</button></li>
+            </ul>
+            <div class="preview-footer"><span>6 preset lain disembunyikan di preview</span><button class="link-btn" type="button">Lihat semua</button></div>
+          </div>
+        </section>
+
+        <section class="menu-group">
+          <button class="menu-toggle" type="button" aria-expanded="false">
+            <span class="menu-toggle-icon" aria-hidden="true">◌</span>
+            <span class="menu-toggle-copy"><span class="menu-toggle-title">Jajan Makan Pokok</span><span class="menu-toggle-description">Camilan dan tambahan makan</span></span>
+            <span class="panel-tag">7 item</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="menu-group-body"><p class="empty-state">Daftar contoh jajan akan muncul di sini.</p></div>
+        </section>
+
+        <section class="menu-group">
+          <button class="menu-toggle" type="button" aria-expanded="false">
+            <span class="menu-toggle-icon" aria-hidden="true">⌂</span>
+            <span class="menu-toggle-copy"><span class="menu-toggle-title">Makan di Luar</span><span class="menu-toggle-description">Pilihan makan dari luar rumah</span></span>
+            <span class="panel-tag">8 item</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="menu-group-body"><p class="empty-state">Daftar contoh makan di luar akan muncul di sini.</p></div>
+        </section>
+
+        <section class="menu-group">
+          <button class="menu-toggle" type="button" aria-expanded="false">
+            <span class="menu-toggle-icon" aria-hidden="true">＋</span>
+            <span class="menu-toggle-copy"><span class="menu-toggle-title">Kebutuhan Lain</span><span class="menu-toggle-description">Bensin, laundry, perlengkapan, dan lainnya</span></span>
+            <span class="panel-tag">8 item</span><span class="menu-toggle-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="menu-group-body"><p class="empty-state">Daftar contoh kebutuhan lain akan muncul di sini.</p></div>
+        </section>
+      </div>
+    </main>
+    <script>
+      document.querySelectorAll('.menu-toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+          var group = toggle.closest('.menu-group');
+          var isOpen = group.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', String(isOpen));
+        });
+      });
+    </script>
+  </body>
+</html>
