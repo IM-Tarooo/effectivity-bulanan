@@ -240,6 +240,82 @@ body[data-screen="app"] .shoreline {
   opacity: 0.38;
 }
 
+.ambient-effects {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient-leaf {
+  position: absolute;
+  width: 84px;
+  height: 34px;
+  border: 1px solid rgba(63, 107, 82, 0.2);
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(135deg, rgba(138, 106, 63, 0.1), rgba(63, 107, 82, 0.22));
+  box-shadow: inset -12px -6px 18px rgba(31, 46, 39, 0.08);
+  opacity: 0.55;
+  transform-origin: left center;
+  animation: leafFloat 13s ease-in-out infinite alternate;
+}
+
+.ambient-leaf::after {
+  position: absolute;
+  top: 50%;
+  left: 7%;
+  width: 82%;
+  height: 1px;
+  background: rgba(63, 107, 82, 0.24);
+  content: "";
+  transform: rotate(-18deg);
+}
+
+.leaf-a { top: 13%; left: 5%; transform: rotate(28deg); }
+.leaf-b { top: 32%; right: 8%; width: 108px; transform: rotate(-44deg); animation-delay: -4s; }
+.leaf-c { top: 68%; left: 9%; width: 62px; opacity: 0.4; transform: rotate(-10deg); animation-delay: -8s; }
+.leaf-d { top: 79%; right: 18%; width: 92px; transform: rotate(54deg); animation-delay: -2s; }
+.leaf-e { top: 8%; right: 28%; width: 55px; opacity: 0.35; transform: rotate(70deg); animation-delay: -6s; }
+.leaf-f { top: 48%; left: 42%; width: 48px; opacity: 0.28; transform: rotate(-65deg); animation-delay: -10s; }
+
+.ambient-aurora {
+  position: absolute;
+  top: -10%;
+  left: -12%;
+  width: 124%;
+  height: 22%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent 7%, rgba(91, 202, 191, 0.2) 35%, rgba(126, 112, 218, 0.18) 54%, rgba(223, 185, 127, 0.15) 72%, transparent 94%);
+  filter: blur(14px);
+  opacity: 0;
+  transform: rotate(-7deg);
+  transition: opacity 0.45s ease;
+}
+
+.aurora-b {
+  top: 66%;
+  height: 15%;
+  transform: rotate(8deg);
+}
+
+:root[data-theme="dark"] .ambient-leaf {
+  opacity: 0;
+}
+
+:root[data-theme="dark"] .ambient-aurora {
+  opacity: 0.58;
+  animation: auroraShine 11s ease-in-out infinite alternate;
+}
+
+body[data-screen="auth"] .ambient-leaf {
+  opacity: 0.78;
+}
+
+:root[data-theme="dark"] body[data-screen="auth"] .ambient-leaf {
+  opacity: 0;
+}
+
 @keyframes shoreDrift {
   from {
     transform: rotate(-5deg) scaleX(1.08) translate3d(-1.2%, 0, 0);
@@ -256,6 +332,16 @@ body[data-screen="app"] .shoreline {
   to {
     transform: rotate(2.4deg) scaleX(1.08) translate3d(-1%, -1%, 0);
   }
+}
+
+@keyframes leafFloat {
+  from { margin-top: -8px; margin-left: -5px; }
+  to { margin-top: 9px; margin-left: 7px; }
+}
+
+@keyframes auroraShine {
+  from { filter: blur(14px) brightness(0.8); transform: rotate(-7deg) translateX(-2%); }
+  to { filter: blur(18px) brightness(1.25); transform: rotate(-4deg) translateX(2%); }
 }
 
 .welcome-screen,
@@ -922,11 +1008,11 @@ body[data-screen="app"] .shoreline {
 .layout {
   display: grid;
   width: 100%;
-  max-width: 1440px;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 28px;
+  max-width: 1560px;
+  grid-template-columns: 274px minmax(0, 1fr);
+  gap: 34px;
   margin: 0 auto;
-  padding: 28px 28px 56px;
+  padding: 32px 36px 64px;
 }
 
 .side-nav {
@@ -935,8 +1021,8 @@ body[data-screen="app"] .shoreline {
   display: flex;
   flex-direction: column;
   align-self: start;
-  gap: 4px;
-  padding: 18px 12px;
+  gap: 6px;
+  padding: 22px 15px;
   border: 1px solid var(--forest);
   border-top: 2px solid var(--accent-2);
   border-radius: var(--radius);
@@ -949,14 +1035,14 @@ body[data-screen="app"] .shoreline {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 10px;
-  padding: 11px 12px;
+  gap: 13px;
+  padding: 13px 14px;
   border: 1px solid transparent;
   border-left: 2px solid transparent;
   border-radius: var(--radius);
   background: transparent;
   color: #c9c2b4;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-align: left;
@@ -976,15 +1062,15 @@ body[data-screen="app"] .shoreline {
 
 .nav-ico {
   display: grid;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex: none;
   place-items: center;
 }
 
 .nav-ico svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
@@ -996,8 +1082,8 @@ body[data-screen="app"] .shoreline {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-top: 12px;
-  padding: 12px 8px 2px;
+  margin-top: 16px;
+  padding: 15px 10px 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   color: #8f9a92;
   font-size: 9px;
@@ -1241,18 +1327,33 @@ body[data-screen="app"] .shoreline {
 .pocket-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid var(--line);
+  gap: 12px;
+  overflow: visible;
+  border: 0;
   border-radius: var(--radius);
-  background: var(--line);
-  box-shadow: var(--shadow);
+  background: transparent;
+  box-shadow: none;
 }
 
 .pocket-card {
   position: relative;
+  isolation: isolate;
+  width: 100%;
   padding: 20px 22px;
+  border: 0;
   background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.pocket-card:not(.is-shared),
+.pocket-summary-item:not(.is-shared) {
+  background:
+    radial-gradient(circle at 108% -8%, color-mix(in srgb, var(--pocket-color) 19%, transparent), transparent 45%),
+    var(--surface);
 }
 
 .pocket-card::before {
@@ -1261,6 +1362,41 @@ body[data-screen="app"] .shoreline {
   inset: 0 auto 0 0;
   width: 3px;
   background: var(--pocket-color);
+  content: "";
+  z-index: 2;
+}
+
+.pocket-card::after,
+.pocket-summary-item::after {
+  position: absolute;
+  z-index: 0;
+  bottom: -79px;
+  left: -28%;
+  width: 156%;
+  height: 118px;
+  border: 1px solid color-mix(in srgb, var(--pocket-color) 27%, transparent);
+  border-radius: 50%;
+  box-shadow:
+    0 -20px 0 -1px color-mix(in srgb, var(--pocket-color) 15%, transparent),
+    0 -40px 0 -1px color-mix(in srgb, var(--pocket-color) 8%, transparent);
+  content: "";
+  opacity: 0.9;
+  transform: rotate(-8deg);
+}
+
+.pocket-card:hover,
+.pocket-card:focus-visible,
+.pocket-summary-item:hover,
+.pocket-summary-item:focus-visible {
+  z-index: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--pocket-color) 16%, transparent);
+  outline: none;
+}
+
+.pocket-card:focus-visible,
+.pocket-summary-item:focus-visible {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--pocket-color);
 }
 
 .pocket-card-head {
@@ -1314,6 +1450,84 @@ body[data-screen="app"] .shoreline {
   color: var(--muted);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+}
+
+.pocket-card > *,
+.pocket-summary-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pocket-card.is-shared,
+.pocket-summary-item.is-shared {
+  border-color: rgba(223, 185, 127, 0.35);
+  background:
+    radial-gradient(circle at 87% 18%, rgba(245, 224, 161, 0.22), transparent 32%),
+    linear-gradient(135deg, #1b2a23, #23392d 56%, #17221c);
+}
+
+.pocket-card.is-shared::before {
+  background: linear-gradient(180deg, #f0ca82, #a77936);
+}
+
+.pocket-card.is-shared::after,
+.pocket-summary-item.is-shared::after {
+  display: none;
+}
+
+.pocket-card.is-shared .pocket-card-head,
+.pocket-card.is-shared .pocket-card-sub,
+.pocket-card.is-shared .pocket-card-meta,
+.pocket-summary-item.is-shared .pocket-summary-name,
+.pocket-summary-item.is-shared .pocket-summary-sub {
+  color: #d8d2c6;
+}
+
+.pocket-card.is-shared strong,
+.pocket-summary-item.is-shared strong {
+  color: #fff4db;
+}
+
+.pocket-card.is-shared .pocket-card-meta {
+  border-top-color: rgba(245, 224, 161, 0.2);
+}
+
+.pocket-card-chandelier {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 20px;
+  width: 76px;
+  height: 88px;
+  background: linear-gradient(90deg, transparent 49%, rgba(245, 224, 161, 0.72) 49% 51%, transparent 51%) top / 100% 36px no-repeat;
+  opacity: 0.78;
+}
+
+.pocket-card-chandelier::before {
+  position: absolute;
+  top: 31px;
+  left: 8px;
+  width: 58px;
+  height: 28px;
+  border-right: 1px solid rgba(245, 224, 161, 0.65);
+  border-bottom: 1px solid rgba(245, 224, 161, 0.65);
+  border-left: 1px solid rgba(245, 224, 161, 0.65);
+  border-radius: 0 0 50% 50%;
+  content: "";
+}
+
+.pocket-card-chandelier::after {
+  position: absolute;
+  top: 54px;
+  left: 10px;
+  width: 56px;
+  height: 26px;
+  background:
+    radial-gradient(circle at 0 24%, #ffe6a7 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 82%, #ffe6a7 0 3px, transparent 4px),
+    radial-gradient(circle at 100% 24%, #ffe6a7 0 2px, transparent 3px);
+  filter: drop-shadow(0 0 5px rgba(245, 202, 119, 0.7));
+  content: "";
 }
 
 .warning-panel {
@@ -1806,14 +2020,22 @@ select {
 }
 
 .pocket-summary-item {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 100%;
   padding: 13px 15px;
   border: 1px solid var(--line);
   border-top: 3px solid var(--pocket-color);
   border-radius: var(--radius);
   background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .pocket-summary-name {

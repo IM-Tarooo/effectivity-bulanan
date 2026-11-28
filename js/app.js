@@ -636,13 +636,14 @@
           sub += " · bagi 2 bareng " + EFB.money(pocket.sharedShare);
         }
         return (
-          '<article class="pocket-card" style="--pocket-color:' + meta.color + '">' +
+          '<button type="button" class="pocket-card' + (isShared ? " is-shared" : "") + '" data-pocket-log="' + key + '" aria-label="Buka log pengeluaran ' + esc(isShared ? "Bareng" : meta.label) + '" style="--pocket-color:' + meta.color + '">' +
+          (isShared ? '<span class="pocket-card-chandelier" aria-hidden="true"></span>' : "") +
           '<div class="pocket-card-head"><span class="pocket-dot"></span><span>' + esc(title) + "</span></div>" +
           "<strong>" + EFB.money(remaining) + "</strong>" +
           '<span class="pocket-card-sub">' + sub + "</span>" +
           '<div class="pocket-card-meta"><span>' + Math.round(pct) + "% terpakai</span><span>" +
           count + " transaksi</span></div>" +
-          "</article>"
+          "</button>"
         );
       })
       .join("");
@@ -665,12 +666,13 @@
         var expense = isShared ? summary.totalExpense : pocket.expense;
         var remaining = isShared ? summary.remaining : pocket.remaining;
         return (
-          '<div class="pocket-summary-item" style="--pocket-color:' + meta.color + '">' +
+          '<button type="button" class="pocket-summary-item' + (isShared ? " is-shared" : "") + '" data-pocket-log="' + key + '" aria-label="Buka log pengeluaran ' + esc(isShared ? "Bareng" : meta.label) + '" style="--pocket-color:' + meta.color + '">' +
+          (isShared ? '<span class="pocket-card-chandelier" aria-hidden="true"></span>' : "") +
           '<span class="pocket-summary-name"><span class="pocket-dot"></span>' +
           esc(isShared ? "Total" : meta.label) + "</span>" +
           '<strong>' + EFB.money(remaining) + "</strong>" +
           '<span class="pocket-summary-sub">sisa · ' + EFB.money(expense) + " terpakai</span>" +
-          "</div>"
+          "</button>"
         );
       })
       .join("");
@@ -1441,6 +1443,19 @@
   /* ==========================================================
    * TABS & MONTH
    * ========================================================== */
+  function openPocketLog(pocket) {
+    if (["owner", "partner", "shared"].indexOf(pocket) < 0) return;
+
+    var filter = $("#expense-filter-pocket");
+    if (filter) filter.value = pocket;
+    setTab("expenses");
+
+    window.requestAnimationFrame(function () {
+      var list = $("#expense-list");
+      if (list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   function setTab(tab) {
     state.tab = tab;
 
@@ -2186,6 +2201,15 @@
     $$(".nav-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         setTab(btn.getAttribute("data-tab"));
+      });
+    });
+
+    ["#dash-pockets", "#budget-pockets", "#expense-pocket-summary"].forEach(function (selector) {
+      var container = $(selector);
+      if (!container) return;
+      container.addEventListener("click", function (event) {
+        var card = event.target.closest("[data-pocket-log]");
+        if (card) openPocketLog(card.getAttribute("data-pocket-log"));
       });
     });
 
